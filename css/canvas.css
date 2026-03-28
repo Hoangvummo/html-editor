@@ -11,11 +11,12 @@
     0 0 0 1px rgba(0, 0, 0, 0.1),
     0 4px 24px rgba(0, 0, 0, 0.2);
   position: relative;
+  width: 100%;
+  max-width: 100%;
   min-height: 400px;
   overflow: visible;
-  /* Smooth transitions for responsive preview switching */
   transition:
-    width var(--transition-normal) ease,
+    max-width var(--transition-normal) ease,
     min-height var(--transition-normal) ease;
 }
 

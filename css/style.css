@@ -379,11 +379,11 @@ img {
   border-bottom: 1px solid var(--border-color);
 }
 
-.sidebar-search {
+.search-box {
   position: relative;
 }
 
-.sidebar-search input {
+.search-box input {
   width: 100%;
   height: 32px;
   padding: 0 10px 0 32px;
@@ -395,17 +395,17 @@ img {
   transition: all var(--transition-fast);
 }
 
-.sidebar-search input::placeholder {
+.search-box input::placeholder {
   color: var(--text-muted);
 }
 
-.sidebar-search input:focus {
+.search-box input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.sidebar-search-icon {
+.search-box-icon {
   position: absolute;
   left: 9px;
   top: 50%;
@@ -524,11 +524,13 @@ img {
 /* ── 8. Canvas Wrapper ──────────────────────────────────────── */
 #canvas-wrapper {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow: auto;
   background: var(--bg-primary);
+  padding: 24px;
   /* Subtle grid background pattern */
   background-image:
     radial-gradient(circle, var(--border-light) 1px, transparent 1px);
