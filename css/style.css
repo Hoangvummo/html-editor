@@ -1046,7 +1046,7 @@ body.preview-mode #canvas-wrapper {
   background-image: none;
 }
 
-body.preview-mode #main-layout {
+body.preview-mode #app {
   height: 100vh;
 }
 

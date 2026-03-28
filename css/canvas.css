@@ -256,3 +256,40 @@ body.preview-mode #canvas [data-component] {
   font-size: 12px;
   font-weight: 500;
 }
+
+/* ── SortableJS States ──────────────────────────────────── */
+.sortable-ghost {
+  opacity: 0.3 !important;
+  outline: 2px dashed var(--accent) !important;
+  outline-offset: -2px;
+}
+
+.sortable-chosen {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+}
+
+.sortable-drag {
+  opacity: 0.8 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Responsive Preview Modes ───────────────────────────── */
+.responsive-tablet {
+  max-width: 768px !important;
+  margin: 0 auto !important;
+  box-shadow: 0 0 0 1px var(--border-color) !important;
+}
+
+.responsive-mobile {
+  max-width: 375px !important;
+  margin: 0 auto !important;
+  box-shadow: 0 0 0 1px var(--border-color) !important;
+}
+
+/* ── Component Items Container ──────────────────────────── */
+.component-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
