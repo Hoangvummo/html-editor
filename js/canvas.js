@@ -45,6 +45,14 @@ function handleClick(e) {
     return;
   }
 
+  // Check if click is inside imported content — select the wrapper, not inner elements
+  const importedWrapper = e.target.closest('[data-imported]');
+  if (importedWrapper && canvas.contains(importedWrapper)) {
+    e.stopPropagation();
+    selectElement(importedWrapper);
+    return;
+  }
+
   const componentEl = e.target.closest('[data-component]');
   if (componentEl && canvas.contains(componentEl)) {
     e.stopPropagation();

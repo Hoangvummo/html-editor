@@ -67,12 +67,45 @@
   --z-tooltip: 400;
 }
 
-/* ── 3. CSS Reset ───────────────────────────────────────────── */
-*,
-*::before,
-*::after {
+/* ── 3. CSS Reset (scoped to editor UI only) ─────────────────── */
+/* IMPORTANT: Do NOT use global * reset — it breaks imported page content.
+   Only reset elements within editor UI containers, NOT inside #canvas. */
+#app > *,
+#toolbar,
+#toolbar *,
+#sidebar,
+#sidebar *,
+#panel,
+#panel *,
+#canvas-wrapper:not(#canvas):not(#canvas *) {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+
+/* Ensure canvas children keep their own box-sizing */
+#canvas, #canvas * {
+  box-sizing: border-box;
+}
+
+/* Tailwind CDN preflight protection — ensure editor UI keeps its borders */
+#toolbar, #sidebar, #panel {
+  border: inherit;
+}
+#toolbar button,
+#toolbar input,
+#toolbar select,
+#sidebar button,
+#sidebar input,
+#sidebar select,
+#panel button,
+#panel input,
+#panel select,
+#panel textarea {
+  border: inherit;
+}
+/* Restore Tailwind's preflight only inside imported content */
+.imported-content, .imported-content * {
   box-sizing: border-box;
 }
 
@@ -92,13 +125,14 @@ body {
   width: 100vw;
 }
 
-a {
+/* Editor UI links only — NOT inside canvas */
+:not(#canvas) > a {
   color: var(--accent);
   text-decoration: none;
   transition: color var(--transition-fast);
 }
 
-a:hover {
+:not(#canvas) > a:hover {
   color: var(--accent-hover);
 }
 
@@ -111,17 +145,23 @@ button {
   font-size: inherit;
 }
 
-input, textarea, select {
+/* Editor UI inputs only */
+#toolbar input, #toolbar textarea, #toolbar select,
+#sidebar input, #sidebar textarea, #sidebar select,
+#panel input, #panel textarea, #panel select {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
 }
 
-ul, ol {
+/* Editor UI lists only — NOT inside canvas */
+:not(#canvas) > ul,
+:not(#canvas) > ol {
   list-style: none;
 }
 
-img {
+/* Do NOT override img display for imported content */
+:not(#canvas) > img {
   max-width: 100%;
   height: auto;
   display: block;

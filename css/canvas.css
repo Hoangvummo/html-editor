@@ -4,8 +4,10 @@
    ================================================================ */
 
 /* ── Canvas Area ─────────────────────────────────────────────── */
+/* Canvas is transparent — imported page's own background shows through.
+   Only show white background when canvas is empty (via .canvas-empty-bg). */
 #canvas {
-  background: #ffffff;
+  background: transparent;
   border-radius: var(--radius-lg);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.1),
@@ -20,9 +22,20 @@
     min-height var(--transition-normal) ease;
 }
 
-/* Canvas content area — children get standard block flow */
-#canvas > *:not(.drop-indicator):not(.canvas-empty-state) {
+/* White background only when canvas has no imported content */
+#canvas:has(.canvas-empty-state) {
+  background: #ffffff;
+}
+
+/* Canvas content area — only force position:relative on editor-added components,
+   NOT on imported page elements (which may have their own positioning) */
+#canvas > [data-component]:not(.drop-indicator):not(.canvas-empty-state) {
   position: relative;
+}
+
+/* Imported content wrapper — preserve original layout */
+#canvas > .imported-content {
+  width: 100%;
 }
 
 /* ── Editor-Selected State (inside canvas) ───────────────────── */

@@ -81,42 +81,164 @@ function loadImportedHTML(htmlString) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
-  // Extract body content
-  let bodyContent = doc.body;
+  // ── 1. Extract and inject Google Fonts into document <head> ──
+  const headEl = document.head;
+  const existingFontHrefs = new Set(
+    Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
+      .map(l => l.href)
+  );
 
-  // If the body has only one child that's a wrapper, unwrap it
-  // Also try to extract from common wrapper patterns
-  const content = bodyContent.innerHTML;
+  doc.querySelectorAll('link[href*="fonts.googleapis.com"]').forEach(link => {
+    if (!existingFontHrefs.has(link.href)) {
+      const newLink = document.createElement('link');
+      newLink.rel = 'stylesheet';
+      newLink.href = link.href;
+      headEl.appendChild(newLink);
+    }
+  });
 
-  // Remove any existing empty state
-  const emptyState = canvas.querySelector('.canvas-empty-state');
-  if (emptyState) emptyState.remove();
+  // ── 2. Extract and inject Tailwind CSS CDN + config ──────────
+  // Many pages rely on Tailwind CDN for layout. Without it, the page looks broken.
+  const hasTailwindCDN = doc.querySelector('script[src*="tailwindcss"]');
+  if (hasTailwindCDN && !document.querySelector('script[src*="tailwindcss"]')) {
+    const s = document.createElement('script');
+    s.src = hasTailwindCDN.src;
+    s.crossOrigin = 'anonymous';
+    headEl.appendChild(s);
+  }
 
-  // Clear canvas and set new content
-  canvas.innerHTML = content;
-
-  // Ensure all imported elements have data-component attribute
-  canvas.querySelectorAll('*').forEach(el => {
-    if (!el.hasAttribute('data-component') &&
-        !el.classList.contains('canvas-empty-state') &&
-        !el.classList.contains('drop-indicator')) {
-      // Infer component type from tag
-      const tag = el.tagName.toLowerCase();
-      if (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span'].includes(tag)) {
-        el.setAttribute('data-component', tag);
-      } else if (tag === 'img') {
-        el.setAttribute('data-component', 'image');
-      } else if (tag === 'button') {
-        el.setAttribute('data-component', 'button');
-      } else if (tag === 'a') {
-        el.setAttribute('data-component', 'link');
-      } else if (['section', 'div', 'article', 'aside'].includes(tag)) {
-        el.setAttribute('data-component', 'container');
+  // Inject Tailwind config from imported page (if exists)
+  doc.querySelectorAll('script:not([src])').forEach(script => {
+    if (script.textContent.includes('tailwind.config')) {
+      const existingConfig = document.querySelector('script:not([src])');
+      if (!existingConfig || !existingConfig.textContent.includes('tailwind.config')) {
+        const s = document.createElement('script');
+        s.textContent = script.textContent;
+        headEl.appendChild(s);
       }
     }
   });
 
+  // ── 3. Extract <style> tags from imported <head> ─────────────
+  // Scope each <style> block under .imported-content to avoid conflicts
+  // with editor CSS, then inject into document <head>
+  const styleId = 'imported-styles-' + Date.now();
+  let combinedCSS = '';
+
+  doc.querySelectorAll('head style').forEach((styleTag, i) => {
+    const css = styleTag.textContent;
+    if (css.trim()) {
+      combinedCSS += `\n/* Imported style block ${i + 1} */\n${css}\n`;
+    }
+  });
+
+  // Also extract inline style attributes for scoping
+  // Process CSS: scope top-level selectors under .imported-content
+  if (combinedCSS) {
+    const scopedCSS = scopeCSS(combinedCSS, '.imported-content');
+    const styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    styleEl.textContent = scopedCSS;
+    headEl.appendChild(styleEl);
+  }
+
+  // ── 4. Remove existing empty state ──────────────────────────
+  const emptyState = canvas.querySelector('.canvas-empty-state');
+  if (emptyState) emptyState.remove();
+
+  // Remove previous imported styles if any
+  const prevStyle = document.getElementById('imported-styles');
+  if (prevStyle) prevStyle.remove();
+
+  // ── 5. Wrap body content in .imported-content div ───────────
+  const wrapper = document.createElement('div');
+  wrapper.className = 'imported-content';
+
+  // Get body innerHTML, excluding script tags
+  const bodyClone = doc.body.cloneNode(true);
+  bodyClone.querySelectorAll('script').forEach(s => s.remove());
+  // Remove Tailwind config script
+  bodyClone.querySelectorAll('script:not([src])').forEach(s => {
+    if (s.textContent.includes('tailwind.config')) s.remove();
+  });
+
+  wrapper.innerHTML = bodyClone.innerHTML;
+
+  // ── 6. Mark wrapper as imported (prevents editor dragging/selecting children) ──
+  wrapper.setAttribute('data-imported', 'true');
+  wrapper.setAttribute('data-component', 'imported-page');
+
+  // ── 7. Inject into canvas ───────────────────────────────────
+  canvas.appendChild(wrapper);
+
   emit('history:push');
+}
+
+/**
+ * Scope CSS rules under a parent selector to avoid conflicts with editor CSS.
+ * Handles:
+ * - Simple selectors: .class → .imported-content .class
+ * - Body selectors: body → .imported-content
+ * - HTML selectors: html → .imported-content
+ * - @-rules (media, keyframes, etc.) — passed through with inner rules scoped
+ * - @font-face — passed through unchanged
+ */
+function scopeCSS(css, scope) {
+  if (!css || !css.trim()) return '';
+
+  // Step 1: Extract and preserve @-rule blocks (keyframes, font-face, etc.)
+  // These should NOT be scoped — they're global by nature
+  const atRulePlaceholder = '/*__AT_RULE__*/';
+  const preservedAtRules = [];
+  let result = css;
+
+  // Match @-rule blocks with balanced braces (handles nested braces)
+  result = result.replace(/@[\w-]+[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g, (match) => {
+    // Don't scope @media, @supports, @layer — handle their inner content
+    const atRuleType = match.match(/^@([\w-]+)/)?.[1];
+    if (['media', 'supports', 'layer'].includes(atRuleType)) {
+      // Extract inner content and scope it
+      const innerMatch = match.match(/^(@[^{]+)\{([\s\S]*)\}$/);
+      if (innerMatch) {
+        const [, atRuleHeader, innerContent] = innerMatch;
+        const scopedInner = scopeSelectors(innerContent, scope);
+        return `${atRuleHeader} { ${scopedInner} }`;
+      }
+    }
+    // Preserve @keyframes, @font-face, etc. unchanged
+    preservedAtRules.push(match);
+    return `${atRulePlaceholder}${preservedAtRules.length - 1}${atRulePlaceholder}`;
+  });
+
+  // Step 2: Scope remaining selectors
+  result = scopeSelectors(result, scope);
+
+  // Step 3: Restore preserved @-rules
+  result = result.replace(/\/\*__AT_RULE__\*\/(\d+)\/\*__AT_RULE__\*\//g, (_, index) => {
+    return preservedAtRules[parseInt(index)] || '';
+  });
+
+  return result;
+}
+
+function scopeSelectors(css, scope) {
+  return css.replace(/([^{]*)\{([^}]*)\}/g, (match, selector, declarations) => {
+    const sel = selector.trim();
+    if (sel.startsWith('@')) return match; // Skip any remaining @-rules
+    if (!sel) return match;
+
+    const scoped = sel.split(',').map(s => {
+      s = s.trim();
+      if (s.startsWith(scope)) return s; // Already scoped
+      if (s === 'body' || s === 'html') return scope;
+      if (s === '*') return `${scope} *`;
+      if (s.startsWith('*::')) return `${scope} ${s}`;
+      if (s.startsWith('*:')) return `${scope} ${s}`;
+      return `${scope} ${s}`;
+    }).join(', ');
+
+    return `${scoped} { ${declarations} }`;
+  });
 }
 
 // ── Copy to clipboard ──────────────────────────────────────
@@ -163,6 +285,15 @@ function cleanCanvas(sourceCanvas) {
   // Remove drag handles
   clone.querySelectorAll('.drag-handle').forEach(el => el.remove());
 
+  // Unwrap imported-content wrapper — move its children up
+  clone.querySelectorAll('.imported-content').forEach(wrapper => {
+    const parent = wrapper.parentNode;
+    while (wrapper.firstChild) {
+      parent.insertBefore(wrapper.firstChild, wrapper);
+    }
+    wrapper.remove();
+  });
+
   // Clean all elements
   clone.querySelectorAll('*').forEach(el => {
     // Remove editor classes
@@ -171,6 +302,7 @@ function cleanCanvas(sourceCanvas) {
     // Remove editor-specific attributes
     el.removeAttribute('data-component');
     el.removeAttribute('data-component-id');
+    el.removeAttribute('data-imported');
     el.removeAttribute('contenteditable');
     el.removeAttribute('draggable');
     el.removeAttribute('spellcheck');

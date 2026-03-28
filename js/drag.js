@@ -85,9 +85,9 @@ export function initCanvasSortable() {
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
     dragClass: 'sortable-drag',
-    filter: '.canvas-empty-state, .drop-indicator',
+    filter: '.canvas-empty-state, .drop-indicator, [data-imported]',
     preventOnFilter: false,
-    draggable: '[data-component]',
+    draggable: '[data-component]:not([data-imported])',
 
     onEnd(evt) {
       // Remove visual feedback classes
