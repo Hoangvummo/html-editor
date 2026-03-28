@@ -1,0 +1,589 @@
+/* ================================================================
+   panel.css — Properties Panel Styles
+   Input fields, color pickers, range sliders, select dropdowns,
+   spacing visualizer, section accordion, delete button
+   ================================================================ */
+
+/* ── Panel Header ────────────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+}
+
+.panel-element-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.panel-element-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Panel Empty State ───────────────────────────────────────── */
+.panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  gap: 8px;
+  height: 100%;
+  min-height: 200px;
+}
+
+.panel-empty svg {
+  opacity: 0.4;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.panel-empty p {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── Panel Sections (Accordion) ──────────────────────────────── */
+.panel-section {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-section:last-child {
+  border-bottom: none;
+}
+
+.panel-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  transition: all var(--transition-fast);
+}
+
+.panel-section-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.panel-section-header .chevron {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.panel-section-body {
+  padding: 0 12px 12px 12px;
+  animation: fadeIn var(--transition-fast) ease;
+}
+
+.panel-section.collapsed .panel-section-body {
+  display: none;
+}
+
+.panel-section.collapsed .panel-section-header .chevron {
+  transform: rotate(-90deg);
+}
+
+/* ── Control Rows (Label + Control) ──────────────────────────── */
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+.control-row > label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  min-width: 70px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.control-row > input[type="text"],
+.control-row > select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Control Groups (for spacing grid etc.) ───────────────────── */
+.control-group {
+  margin-bottom: 10px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-group .group-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* Spacing grid: 2x2 grid for top/right/bottom/left */
+.spacing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.small-control {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.small-control label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.small-control input {
+  width: 100%;
+  height: 24px;
+  padding: 0 4px;
+  text-align: center;
+  font-size: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.small-control input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* ── Input Fields ────────────────────────────────────────────── */
+.control-row input[type="text"] {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 11px;
+  transition: all var(--transition-fast);
+}
+
+.control-row input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.control-row input[type="text"]::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Hex Input (for colors) ──────────────────────────────────── */
+.hex-input {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.3px;
+  width: 72px !important;
+  flex: 0 0 72px !important;
+}
+
+/* ── Color Picker ────────────────────────────────────────────── */
+.color-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.color-input-group input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.color-input-group input[type="color"]:hover {
+  border-color: var(--text-muted);
+}
+
+.color-input-group input[type="color"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Webkit color swatch styling */
+.color-input-group input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-input-group input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.color-input-group input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+/* ── Select Dropdowns ────────────────────────────────────────── */
+.control-row select {
+  height: 28px;
+  padding: 0 24px 0 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%238b949e' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: all var(--transition-fast);
+}
+
+.control-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.control-row select:hover {
+  border-color: var(--text-muted);
+}
+
+/* Dark dropdown options */
+.control-row select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* ── Range Sliders ───────────────────────────────────────────── */
+.range-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.range-group input[type="range"] {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.range-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition-fast);
+}
+
+.range-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.range-group input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.range-group input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.range-group input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.range-value {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── Button Group (Toggle) ───────────────────────────────────── */
+.btn-group {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  flex: 1;
+}
+
+.btn-toggle {
+  flex: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0 4px;
+}
+
+.btn-toggle:last-child {
+  border-right: none;
+}
+
+.btn-toggle:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-toggle.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Box Model Diagram (Spacing Visualizer) ──────────────────── */
+.spacing-visualizer-section {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.box-model-diagram {
+  padding: 8px 12px 12px 12px;
+}
+
+.box-margin {
+  position: relative;
+  background: rgba(218, 165, 32, 0.08);
+  border: 1px dashed rgba(218, 165, 32, 0.3);
+  border-radius: 2px;
+  padding: 16px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.box-margin > .box-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.box-margin > .box-top,
+.box-margin > .box-bottom {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.box-margin > .box-top { top: 2px; }
+.box-margin > .box-bottom { bottom: 2px; }
+
+.box-margin > .box-left,
+.box-margin > .box-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.box-margin > .box-left { left: 4px; }
+.box-margin > .box-right { right: 4px; }
+
+.box-border {
+  background: rgba(156, 163, 175, 0.08);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 16px;
+  position: relative;
+}
+
+.box-padding {
+  position: relative;
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px dashed rgba(63, 185, 80, 0.3);
+  border-radius: 2px;
+  padding: 16px;
+}
+
+.box-padding > .box-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.box-padding > .box-top,
+.box-padding > .box-bottom {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.box-padding > .box-top { top: 2px; }
+.box-padding > .box-bottom { bottom: 2px; }
+
+.box-padding > .box-left,
+.box-padding > .box-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.box-padding > .box-left { left: 4px; }
+.box-padding > .box-right { right: 4px; }
+
+.box-content {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 6px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-primary);
+}
+
+/* ── Action Buttons (Duplicate + Delete) ──────────────────────── */
+.panel-actions {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.btn-duplicate,
+.btn-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-duplicate {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.btn-duplicate:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-delete {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--danger);
+  border-color: rgba(248, 81, 73, 0.25);
+}
+
+.btn-delete:hover {
+  background: rgba(248, 81, 73, 0.2);
+  border-color: rgba(248, 81, 73, 0.4);
+}
+
+.btn-delete:active,
+.btn-duplicate:active {
+  transform: scale(0.98);
+}
+
+/* ── Keyboard Shortcut Labels ────────────────────────────────── */
+.panel-actions .btn-duplicate::after,
+.panel-actions .btn-delete::after {
+  content: attr(data-shortcut);
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-left: 4px;
+  font-family: var(--font-mono);
+}

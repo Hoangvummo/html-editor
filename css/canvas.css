@@ -1,0 +1,258 @@
+/* ================================================================
+   canvas.css — Canvas-specific styles
+   Drop zones, selection outlines, drag indicators
+   ================================================================ */
+
+/* ── Canvas Area ─────────────────────────────────────────────── */
+#canvas {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 4px 24px rgba(0, 0, 0, 0.2);
+  position: relative;
+  min-height: 400px;
+  overflow: visible;
+  /* Smooth transitions for responsive preview switching */
+  transition:
+    width var(--transition-normal) ease,
+    min-height var(--transition-normal) ease;
+}
+
+/* Canvas content area — children get standard block flow */
+#canvas > *:not(.drop-indicator):not(.canvas-empty-state) {
+  position: relative;
+}
+
+/* ── Editor-Selected State (inside canvas) ───────────────────── */
+#canvas .editor-selected {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 0;
+  z-index: 5;
+}
+
+/* Label badge above selected element */
+#canvas .editor-selected::before {
+  content: attr(data-component);
+  position: absolute;
+  top: -22px;
+  left: 0;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1.3;
+}
+
+/* ── Editor-Hover State (inside canvas) ──────────────────────── */
+#canvas .editor-hover {
+  outline: 1px dashed rgba(88, 166, 255, 0.5) !important;
+  outline-offset: 0;
+  cursor: pointer;
+}
+
+/* Hover only when NOT selected */
+#canvas .editor-selected.editor-hover {
+  outline: 2px solid var(--accent) !important;
+}
+
+/* ── Drag Handle ─────────────────────────────────────────────── */
+#canvas .drag-handle {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #9ca3af;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: all var(--transition-fast);
+  font-size: 11px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  z-index: 6;
+  user-select: none;
+  line-height: 1;
+}
+
+/* Six dots pattern using CSS */
+#canvas .drag-handle::before {
+  content: '⠿';
+  font-size: 12px;
+}
+
+#canvas .editor-selected:hover .drag-handle {
+  opacity: 1;
+}
+
+#canvas .drag-handle:hover {
+  color: #6b7280;
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+#canvas .drag-handle:active {
+  cursor: grabbing;
+  background: #d1d5db;
+}
+
+/* ── Drop Indicator (inside canvas) ──────────────────────────── */
+#canvas .drop-indicator {
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin: 0;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.4);
+  animation: canvasDropPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes canvasDropPulse {
+  0% { box-shadow: 0 0 4px rgba(88, 166, 255, 0.3); }
+  100% { box-shadow: 0 0 14px rgba(88, 166, 255, 0.6); }
+}
+
+/* ── Drag Over Visual Feedback ───────────────────────────────── */
+#canvas.drag-over {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Inline Editing State ────────────────────────────────────── */
+#canvas .editor-editing {
+  outline: 1px dashed var(--accent) !important;
+  outline-offset: 2px;
+  cursor: text;
+  caret-color: var(--accent);
+  min-height: 1em;
+}
+
+#canvas .editor-editing:focus {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+}
+
+/* Prevent layout shift during inline edit */
+#canvas .editor-editing * {
+  cursor: text;
+}
+
+/* ── Canvas Empty State ──────────────────────────────────────── */
+.canvas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: #9ca3af;
+  text-align: center;
+  gap: 12px;
+  min-height: 300px;
+  user-select: none;
+}
+
+.canvas-empty-state svg {
+  opacity: 0.4;
+  color: #9ca3af;
+}
+
+.canvas-empty-state p {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* ── Responsive Preview Containers ───────────────────────────── */
+
+/* Desktop — full width */
+#canvas[data-responsive="desktop"] {
+  width: 100%;
+  max-width: 100%;
+  min-height: calc(100vh - var(--toolbar-height) - 48px);
+}
+
+/* Tablet — 768px centered */
+#canvas[data-responsive="tablet"] {
+  width: 768px;
+  max-width: 768px;
+  min-height: 600px;
+  margin: 0 auto;
+}
+
+/* Mobile — 375px centered */
+#canvas[data-responsive="mobile"] {
+  width: 375px;
+  max-width: 375px;
+  min-height: 667px;
+  margin: 0 auto;
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 0 0 8px var(--bg-tertiary),
+    0 0 0 9px var(--border-color),
+    0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Preview Mode (inside canvas) ────────────────────────────── */
+body.preview-mode #canvas {
+  border-radius: 0;
+  box-shadow: none;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+}
+
+body.preview-mode #canvas .editor-selected,
+body.preview-mode #canvas .editor-hover,
+body.preview-mode #canvas .drag-handle,
+body.preview-mode #canvas .drop-indicator,
+body.preview-mode #canvas .canvas-empty-state {
+  display: none !important;
+}
+
+body.preview-mode #canvas [data-component] {
+  outline: none !important;
+  cursor: default;
+}
+
+/* ── Component Placeholder Images ────────────────────────────── */
+#canvas img[src*="placeholder"],
+#canvas img:not([src]),
+#canvas img[src=""] {
+  background: #e5e7eb;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#canvas img[src*="placeholder"]::after,
+#canvas img:not([src])::after,
+#canvas img[src=""]::after {
+  content: 'Image';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+}
