@@ -77,54 +77,69 @@ function loadImportedHTML(htmlString) {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
+  // ── 0. Clean up previous imports ────────────────────────────
+  canvas.querySelectorAll('.imported-content').forEach(el => el.remove());
+  canvas.querySelectorAll('.canvas-empty-state').forEach(el => el.remove());
+  document.querySelectorAll('[id^="imported-styles"]').forEach(el => el.remove());
+  document.querySelectorAll('script[data-imported-tailwind]').forEach(el => el.remove());
+  document.querySelectorAll('script[data-imported-config]').forEach(el => el.remove());
+
   // Parse the HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
   // ── 1. Extract and inject Google Fonts into document <head> ──
-  const headEl = document.head;
   const existingFontHrefs = new Set(
     Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
       .map(l => l.href)
   );
-
   doc.querySelectorAll('link[href*="fonts.googleapis.com"]').forEach(link => {
     if (!existingFontHrefs.has(link.href)) {
       const newLink = document.createElement('link');
       newLink.rel = 'stylesheet';
       newLink.href = link.href;
-      headEl.appendChild(newLink);
+      document.head.appendChild(newLink);
     }
   });
 
-  // ── 2. Extract and inject Tailwind CSS CDN + config ──────────
-  // Many pages rely on Tailwind CDN for layout. Without it, the page looks broken.
+  // ── 2. Extract body content → ADD TO CANVAS FIRST ──────────
+  // Tailwind CDN needs to see content in DOM when it processes
+  const bodyClone = doc.body.cloneNode(true);
+  bodyClone.querySelectorAll('script').forEach(s => s.remove());
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'imported-content';
+  wrapper.setAttribute('data-imported', 'true');
+  wrapper.setAttribute('data-component', 'imported-page');
+  wrapper.style.width = '100%';
+  // Copy body attributes (class, style, etc.) to wrapper
+  if (bodyClone.className) wrapper.className += ' ' + bodyClone.className;
+  if (bodyClone.getAttribute('style')) wrapper.style.cssText += ';' + bodyClone.getAttribute('style');
+  wrapper.innerHTML = bodyClone.innerHTML;
+  canvas.appendChild(wrapper);
+
+  // ── 3. Inject Tailwind config (must be BEFORE Tailwind CDN) ──
+  doc.querySelectorAll('script:not([src])').forEach(script => {
+    if (script.textContent.includes('tailwind.config')) {
+      const s = document.createElement('script');
+      s.setAttribute('data-imported-config', 'true');
+      s.textContent = script.textContent;
+      document.head.appendChild(s);
+    }
+  });
+
+  // ── 4. Inject Tailwind CDN → it will scan DOM including canvas content ──
   const hasTailwindCDN = doc.querySelector('script[src*="tailwindcss"]');
-  if (hasTailwindCDN && !document.querySelector('script[src*="tailwindcss"]')) {
+  if (hasTailwindCDN && !document.querySelector('script[src*="tailwindcss"]:not([data-imported-tailwind])')) {
     const s = document.createElement('script');
     s.src = hasTailwindCDN.src;
     s.crossOrigin = 'anonymous';
-    headEl.appendChild(s);
+    s.setAttribute('data-imported-tailwind', 'true');
+    document.head.appendChild(s);
   }
 
-  // Inject Tailwind config from imported page (if exists)
-  doc.querySelectorAll('script:not([src])').forEach(script => {
-    if (script.textContent.includes('tailwind.config')) {
-      const existingConfig = document.querySelector('script:not([src])');
-      if (!existingConfig || !existingConfig.textContent.includes('tailwind.config')) {
-        const s = document.createElement('script');
-        s.textContent = script.textContent;
-        headEl.appendChild(s);
-      }
-    }
-  });
-
-  // ── 3. Extract <style> tags from imported <head> ─────────────
-  // Scope each <style> block under .imported-content to avoid conflicts
-  // with editor CSS, then inject into document <head>
-  const styleId = 'imported-styles-' + Date.now();
+  // ── 5. Extract and inject scoped custom CSS ────────────────
   let combinedCSS = '';
-
   doc.querySelectorAll('head style').forEach((styleTag, i) => {
     const css = styleTag.textContent;
     if (css.trim()) {
@@ -132,44 +147,13 @@ function loadImportedHTML(htmlString) {
     }
   });
 
-  // Also extract inline style attributes for scoping
-  // Process CSS: scope top-level selectors under .imported-content
   if (combinedCSS) {
     const scopedCSS = scopeCSS(combinedCSS, '.imported-content');
     const styleEl = document.createElement('style');
-    styleEl.id = styleId;
+    styleEl.id = 'imported-styles-' + Date.now();
     styleEl.textContent = scopedCSS;
-    headEl.appendChild(styleEl);
+    document.head.appendChild(styleEl);
   }
-
-  // ── 4. Remove existing empty state ──────────────────────────
-  const emptyState = canvas.querySelector('.canvas-empty-state');
-  if (emptyState) emptyState.remove();
-
-  // Remove previous imported styles if any
-  const prevStyle = document.getElementById('imported-styles');
-  if (prevStyle) prevStyle.remove();
-
-  // ── 5. Wrap body content in .imported-content div ───────────
-  const wrapper = document.createElement('div');
-  wrapper.className = 'imported-content';
-
-  // Get body innerHTML, excluding script tags
-  const bodyClone = doc.body.cloneNode(true);
-  bodyClone.querySelectorAll('script').forEach(s => s.remove());
-  // Remove Tailwind config script
-  bodyClone.querySelectorAll('script:not([src])').forEach(s => {
-    if (s.textContent.includes('tailwind.config')) s.remove();
-  });
-
-  wrapper.innerHTML = bodyClone.innerHTML;
-
-  // ── 6. Mark wrapper as imported (prevents editor dragging/selecting children) ──
-  wrapper.setAttribute('data-imported', 'true');
-  wrapper.setAttribute('data-component', 'imported-page');
-
-  // ── 7. Inject into canvas ───────────────────────────────────
-  canvas.appendChild(wrapper);
 
   emit('history:push');
 }
