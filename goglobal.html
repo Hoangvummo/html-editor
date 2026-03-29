@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Global Masterclass | Wet Avocado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        wa: {
+                            black: '#050505',
+                            dark: '#0A0A0B',
+                            card: '#111113',
+                            border: '#27272A',
+                            pink: '#FFB7C5',
+                            gold: '#D4AF37',
+                            muted: '#A1A1AA'
+                        }
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                        'glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; }
+        .text-gradient {
+            background: linear-gradient(to right, #ffffff, #FFB7C5, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: gradientMove 5s linear infinite;
+        }
+
+        /* Glass & Cards */
+        .glass-panel {
+            background: rgba(17, 17, 19, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+        }
+        
+        .bento-card {
+            background: #111113;
+            border: 1px solid #27272A;
+            border-radius: 24px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .bento-card:hover {
+            border-color: rgba(255, 183, 197, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 183, 197, 0.06), transparent 40%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bento-content { position: relative; z-index: 1; }
+
+        /* Buttons */
+        .btn-primary {
+            background: #ffffff;
+            color: #050505;
+            border: none;
+            border-radius: 100px;
+            padding: 16px 32px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover {
+            background: #FFB7C5;
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 183, 197, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 100px;
+            padding: 16px 32px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover {
+            border-color: #FFB7C5;
+            color: #FFB7C5;
+        }
+
+        /* Utilities */
+        .glow-effect {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,183,197,0.15) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #FFB7C5;
+            margin-bottom: 24px;
+        }
+
+        /* Animations */
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .reveal-up { opacity: 0; transform: translateY(40px); }
+        
+        /* Accordion */
+        .accordion-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s ease; }
+        .accordion-content > div { overflow: hidden; }
+        .accordion-item.active .accordion-content { grid-template-rows: 1fr; }
+        .accordion-item.active .icon-chevron { transform: rotate(180deg); color: #FFB7C5; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #27272A; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FFB7C5; }
+    </style>
+</head>
+<body class="bg-wa-black text-white antialiased">
+
+    <!-- Global Noise Overlay -->
+    <div class="fixed inset-0 z-50 pointer-events-none opacity-[0.03]" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-40 top-0 transition-all duration-300 glass-panel border-x-0 border-t-0 rounded-none" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i data-lucide="gem" class="w-6 h-6 text-wa-pink"></i>
+                <span class="font-serif italic text-xl">Wet Avocado</span>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm text-wa-muted">
+                <a href="#market" class="hover:text-white transition-colors">Thị trường</a>
+                <a href="#course" class="hover:text-white transition-colors">Khóa học</a>
+                <a href="#curriculum" class="hover:text-white transition-colors">Lộ trình</a>
+                <a href="#instructor" class="hover:text-white transition-colors">Giảng viên</a>
+            </div>
+            <a href="#register" class="btn-primary py-2 px-6 text-xs">Đăng ký ngay</a>
+        </div>
+    </nav>
+
+    <!-- 1. Tiêu đề chính (Hero Section) -->
+    <section class="relative min-h-screen flex items-center justify-center pt-32 pb-20 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-wa-pink/10 via-wa-black to-wa-black"></div>
+        <div class="glow-effect"></div>
+        
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+            <div class="inline-block border border-white/10 rounded-full px-4 sm:px-6 py-2 text-[8px] sm:text-[10px] md:text-xs tracking-[0.25em] text-wa-muted uppercase mb-8 md:mb-12 reveal-up font-semibold">
+                THE BLUEPRINT TO GLOBAL FASHION
+            </div>
+            <h1 class="text-[3.5rem] sm:text-[5rem] md:text-[7rem] lg:text-[8.5rem] leading-[0.9] md:leading-[0.85] font-medium mb-8 md:mb-12 reveal-up" style="animation-delay: 0.1s; letter-spacing: -0.03em;">
+                <span class="block font-serif italic text-white/95 translate-x-0 md:-translate-x-8">Chinh Phục</span>
+                <span class="block font-bold text-wa-pink tracking-tight">Thị Trường Mỹ</span>
+            </h1>
+            <p class="text-lg sm:text-xl md:text-2xl text-wa-muted/80 max-w-3xl mx-auto mb-12 md:mb-16 font-light leading-relaxed reveal-up" style="animation-delay: 0.2s;">
+                Học cách vận hành đế chế thời trang triệu đô tại Mỹ từ những người đã đưa <strong class="text-white italic font-serif">Wet Avocado</strong> chinh phục thế giới.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center reveal-up" style="animation-delay: 0.3s;">
+                <a href="#register" class="btn-primary w-full sm:w-auto px-10 py-4 text-sm tracking-wider uppercase flex items-center justify-center gap-2">
+                    Bắt đầu ngay <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                <a href="#case-study" class="btn-outline w-full sm:w-auto px-10 py-4 text-sm tracking-wider uppercase flex items-center justify-center">
+                    Case Study
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Độ lớn thị trường Mỹ -->
+    <section id="market" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal-up">
+                <div class="section-tag mb-4">
+                    <span class="w-2 h-2 rounded-full bg-wa-pink animate-pulse"></span>
+                    MARKET POTENTIAL
+                </div>
+                <h2 class="text-4xl md:text-5xl mb-4 font-serif">Tại sao lại là <span class="text-wa-pink italic">Mỹ?</span></h2>
+                <h2 class="text-3xl md:text-4xl text-wa-muted font-light font-serif">Tại sao lại là <span class="text-white italic">bây giờ?</span></h2>
+            </div>
+
+            <!-- Top Grid: Chart & Quote -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-6">
+                <!-- Thẻ Chart (Col-span 2) -->
+                <div class="bento-card p-8 lg:col-span-2 reveal-up">
+                    <div class="bento-content h-full flex flex-col justify-center">
+                        <div class="space-y-10">
+                            <div>
+                                <div class="flex justify-between items-end mb-3">
+                                    <span class="text-xs tracking-widest uppercase text-white/90 font-medium">Quy mô TMĐT Mỹ (2024)</span>
+                                    <span class="text-3xl font-serif text-white tracking-tight">$1,200 Billion</span>
+                                </div>
+                                <div class="w-full h-[3px] bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-wa-pink w-[95%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-end mb-3">
+                                    <span class="text-xs tracking-widest uppercase text-wa-muted font-medium">Quy mô TMĐT Việt Nam (2024)</span>
+                                    <span class="text-2xl font-serif text-wa-muted tracking-tight">$25 Billion</span>
+                                </div>
+                                <div class="w-full h-[3px] bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-wa-pink/40 w-[8%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Quote -->
+                <div class="bento-card p-8 reveal-up bg-wa-pink/5" style="animation-delay: 0.1s;">
+                    <div class="bento-content h-full flex flex-col justify-center">
+                        <i data-lucide="quote" class="w-8 h-8 text-wa-pink/40 mb-6"></i>
+                        <p class="text-wa-muted text-lg italic leading-relaxed font-light font-serif">
+                            "Thị trường Mỹ rộng lớn hơn gấp hàng chục lần Việt Nam. Khách hàng sẵn sàng chi trả cao cho sự độc đáo và thương hiệu. Bạn không cần một cửa hàng vật lý tại Mỹ, bạn chỉ cần một <span class="text-white font-medium not-italic">Strategy</span> thông minh."
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Grid: 4 Cards -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.2s;">
+                    <div class="bento-content">
+                        <i data-lucide="trending-up" class="w-8 h-8 text-wa-pink mb-6"></i>
+                        <h3 class="text-xl font-serif mb-3 text-white">Sức mua khổng lồ</h3>
+                        <p class="text-wa-muted text-[13px] leading-relaxed">Hơn 300 triệu dân với thói quen mua sắm online cực cao.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.3s;">
+                    <div class="bento-content">
+                        <i data-lucide="dollar-sign" class="w-8 h-8 text-wa-pink mb-6"></i>
+                        <h3 class="text-xl font-serif mb-3 text-white">Biên lợi nhuận cao</h3>
+                        <p class="text-wa-muted text-[13px] leading-relaxed">Giá vốn VN - Giá bán US. Tối ưu hóa lợi nhuận ròng lên tới 20%.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.4s;">
+                    <div class="bento-content">
+                        <i data-lucide="globe" class="w-8 h-8 text-wa-pink mb-6"></i>
+                        <h3 class="text-xl font-serif mb-3 text-white">Vươn tầm quốc tế</h3>
+                        <p class="text-wa-muted text-[13px] leading-relaxed">Xây dựng thương hiệu được công nhận toàn cầu như Fanci hay WA.</p>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.5s;">
+                    <div class="bento-content">
+                        <i data-lucide="zap" class="w-8 h-8 text-wa-pink mb-6"></i>
+                        <h3 class="text-xl font-serif mb-3 text-white">Logistics có sẵn</h3>
+                        <p class="text-wa-muted text-[13px] leading-relaxed">Hệ thống 3PL và cổng thanh toán đã cực kỳ phát triển.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Chi tiết khóa học & 4. Khóa học dành cho -->
+    <section id="course" class="py-24 bg-wa-card border-y border-wa-border relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-20">
+                <!-- Chi tiết khóa học -->
+                <div class="reveal-up">
+                    <div class="section-tag">Tổng Quan</div>
+                    <h2 class="text-4xl mb-6">Masterclass <br><span class="italic text-wa-muted">Thực Chiến D2C Global</span></h2>
+                    <p class="text-wa-muted leading-relaxed mb-8">Khóa học được thiết kế không phải để dạy lý thuyết suông, mà là bản thiết kế (blueprint) sao chép nguyên bản hệ thống đã mang lại thành công cho Wet Avocado tại thị trường quốc tế.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="text-wa-pink w-5 h-5"></i> Thời lượng: 4 Tuần thực chiến</li>
+                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="text-wa-pink w-5 h-5"></i> Hình thức: E-Learning + Livestream Q&A</li>
+                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="text-wa-pink w-5 h-5"></i> Support: Group kín 1-kèm-1</li>
+                    </ul>
+                </div>
+
+                <!-- Khóa học dành cho -->
+                <div class="reveal-up" style="animation-delay: 0.2s;">
+                    <div class="glass-panel p-8">
+                        <h3 class="text-2xl mb-8 border-b border-wa-border pb-4">Khóa học này thiết kế cho ai?</h3>
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <div class="w-12 h-12 rounded-full bg-wa-pink/10 flex items-center justify-center shrink-0">
+                                    <i data-lucide="briefcase" class="text-wa-pink w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Founder / Chủ Local Brand</h4>
+                                    <p class="text-sm text-wa-muted">Muốn mở rộng tệp khách hàng, thoát khỏi cuộc chiến phá giá trong nước.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-12 h-12 rounded-full bg-wa-pink/10 flex items-center justify-center shrink-0">
+                                    <i data-lucide="store" class="text-wa-pink w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Xưởng Sản Xuất / POD</h4>
+                                    <p class="text-sm text-wa-muted">Muốn tự xây dựng thương hiệu D2C riêng, bán thẳng cho khách hàng Mỹ.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-12 h-12 rounded-full bg-wa-pink/10 flex items-center justify-center shrink-0">
+                                    <i data-lucide="rocket" class="text-wa-pink w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Sellers E-commerce</h4>
+                                    <p class="text-sm text-wa-muted">Đang bán Dropship/POD muốn chuyển đổi sang mô hình Brand bền vững, giá trị cao.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Bạn sẽ học được gì & 6. Các chỉ số thành công -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal-up">
+                <div class="section-tag">Giá Trị Cốt Lõi</div>
+                <h2 class="text-4xl md:text-5xl mb-6">Bạn sẽ <span class="text-wa-pink italic">Làm Được Gì?</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+                <div class="bento-card p-6 text-center reveal-up">
+                    <i data-lucide="building" class="w-8 h-8 text-wa-pink mx-auto mb-4"></i>
+                    <h4 class="font-semibold mb-2">Pháp Lý US/UK</h4>
+                    <p class="text-sm text-wa-muted">Tự setup công ty, mở cổng thanh toán Stripe/PayPal không lo bị hold tiền.</p>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.1s;">
+                    <i data-lucide="layout-template" class="w-8 h-8 text-wa-pink mx-auto mb-4"></i>
+                    <h4 class="font-semibold mb-2">Build Store Chuẩn</h4>
+                    <p class="text-sm text-wa-muted">Xây dựng Shopify Store chuẩn quốc tế, tối ưu tỷ lệ chuyển đổi (CRO) > 3%.</p>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.2s;">
+                    <i data-lucide="megaphone" class="w-8 h-8 text-wa-pink mx-auto mb-4"></i>
+                    <h4 class="font-semibold mb-2">Marketing Thực Chiến</h4>
+                    <p class="text-sm text-wa-muted">Thấu hiểu văn hóa tiêu dùng Mỹ, triển khai Ads và làm việc với Micro-Influencer.</p>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.3s;">
+                    <i data-lucide="truck" class="w-8 h-8 text-wa-pink mx-auto mb-4"></i>
+                    <h4 class="font-semibold mb-2">Tối Ưu Vận Hành</h4>
+                    <p class="text-sm text-wa-muted">Setup luồng Logistics mượt mà từ xưởng Việt Nam đến tay khách Mỹ trong 5-7 ngày.</p>
+                </div>
+            </div>
+
+            <!-- Chỉ số thành công -->
+            <div class="glass-panel p-12 relative overflow-hidden reveal-up">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-wa-pink/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+                <h3 class="text-2xl font-serif text-center mb-10">Mục tiêu Đầu Ra (Success Metrics)</h3>
+                <div class="grid md:grid-cols-3 gap-8 text-center divide-x divide-wa-border/50">
+                    <div>
+                        <div class="text-5xl font-light text-wa-pink mb-2">100%</div>
+                        <div class="text-sm text-wa-muted uppercase tracking-wider">Học viên sở hữu Doanh nghiệp US/UK & Cổng thanh toán riêng</div>
+                    </div>
+                    <div>
+                        <div class="text-5xl font-light text-wa-pink mb-2">> 3%</div>
+                        <div class="text-sm text-wa-muted uppercase tracking-wider">Tỷ lệ chuyển đổi (CR) mục tiêu cho Shopify Store</div>
+                    </div>
+                    <div>
+                        <div class="text-5xl font-light text-wa-pink mb-2">30 Ngày</div>
+                        <div class="text-sm text-wa-muted uppercase tracking-wider">Ra mắt thương hiệu toàn cầu và có Sale đầu tiên</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. Giảng viên & 8. Case Study: Wet Avocado -->
+    <section id="instructor" class="py-24 bg-[#0A0A0B] border-y border-wa-border">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-12 gap-16 items-center">
+                <!-- Hình ảnh giảng viên -->
+                <div class="lg:col-span-5 relative reveal-up">
+                    <div class="aspect-[3/4] rounded-2xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" alt="Giảng viên Nhi WA" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute -bottom-8 -right-8 glass-panel p-6 max-w-[250px]">
+                        <p class="font-serif italic text-wa-pink text-xl mb-1">"Mang trí tuệ Việt, thiết kế Việt bán giá thế giới."</p>
+                    </div>
+                </div>
+
+                <!-- Bio & Case Study -->
+                <div class="lg:col-span-7">
+                    <div class="section-tag reveal-up">Giảng Viên & Mentor</div>
+                    <h2 class="text-4xl md:text-5xl mb-4 reveal-up font-serif italic">Ms. Nhi - Founder of Wet Avocado</h2>
+                    <p class="text-xl text-wa-muted mb-8 reveal-up">Chuyên gia E-commerce thị trường Âu Mỹ với 6+ năm kinh nghiệm thực chiến.</p>
+
+                    <!-- WA Revenue Badges -->
+                    <div class="grid grid-cols-3 gap-4 mb-10 reveal-up">
+                        <div class="bento-card p-5 text-center">
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <i data-lucide="badge-dollar-sign" class="w-5 h-5 text-wa-pink"></i>
+                                <span class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Verified Revenue</span>
+                            </div>
+                            <div class="text-2xl font-serif text-white">$1.2M+</div>
+                            <div class="text-[10px] text-wa-muted mt-1">Doanh thu tích lũy tại Mỹ</div>
+                        </div>
+                        <div class="bento-card p-5 text-center">
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <i data-lucide="package" class="w-5 h-5 text-wa-pink"></i>
+                                <span class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Monthly Volume</span>
+                            </div>
+                            <div class="text-2xl font-serif text-white">500+</div>
+                            <div class="text-[10px] text-wa-muted mt-1">Đơn hàng/tháng từ Mỹ</div>
+                        </div>
+                        <div class="bento-card p-5 text-center">
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-wa-pink"></i>
+                                <span class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">YoY Growth</span>
+                            </div>
+                            <div class="text-2xl font-serif text-white">450%</div>
+                            <div class="text-[10px] text-wa-muted mt-1">Tăng trưởng năm qua năm</div>
+                        </div>
+                    </div>
+
+                    <div class="bento-card p-8 mb-8 reveal-up">
+                        <h3 class="text-xl text-wa-pink mb-6 font-serif">Case Study: Hành trình Wet Avocado (WA)</h3>
+                        <div class="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-wa-border before:to-transparent">
+                            
+                            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div class="flex items-center justify-center w-5 h-5 rounded-full border border-white bg-wa-black text-wa-muted shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-[.is-active]:bg-wa-pink group-[.is-active]:text-wa-black group-[.is-active]:border-transparent"></div>
+                                <div class="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] p-4 glass-panel border-wa-border/50">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="font-bold text-white">Khởi đầu</div>
+                                    </div>
+                                    <div class="text-sm text-wa-muted">Từ một Local Brand nhỏ, đối mặt với bài toán vận hành và cổng thanh toán quốc tế.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div class="flex items-center justify-center w-5 h-5 rounded-full border border-white bg-wa-black text-wa-muted shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-[.is-active]:bg-wa-pink group-[.is-active]:text-wa-black group-[.is-active]:border-transparent"></div>
+                                <div class="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] p-4 glass-panel border-wa-border/50">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="font-bold text-white">Đột phá K-Pop Idol</div>
+                                    </div>
+                                    <div class="text-sm text-wa-muted">Thiết kế của WA được diện bởi <strong>2NE1</strong> và các ngôi sao tại <strong>Waterbomb Festival</strong>.</div>
+                                </div>
+                            </div>
+
+                            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div class="flex items-center justify-center w-5 h-5 rounded-full border border-white bg-wa-black text-wa-muted shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-[.is-active]:bg-wa-pink group-[.is-active]:text-wa-black group-[.is-active]:border-transparent"></div>
+                                <div class="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.25rem)] p-4 glass-panel border-wa-border/50">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="font-bold text-white">Scale Global</div>
+                                    </div>
+                                    <div class="text-sm text-wa-muted">Xây dựng hệ thống tự động hóa, chinh phục thị trường Mỹ với tệp khách hàng High-end.</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8b. Vietnamese Brands Going Global -->
+    <section class="py-24 bg-[#0A0A0B] border-y border-wa-border">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal-up">
+                <div class="section-tag">
+                    <span class="w-2 h-2 rounded-full bg-wa-pink animate-pulse"></span>
+                    PROOF OF CONCEPT
+                </div>
+                <h2 class="text-4xl md:text-5xl mb-4 font-serif">Thời Trang Việt <span class="text-wa-pink italic">Chinh Phục Thế Giới</span></h2>
+                <p class="text-wa-muted max-w-2xl mx-auto">WA không phải ngoại lệ. Nhiều thương hiệu Việt đã và đang vươn ra toàn cầu — bằng chính sản phẩm và câu chuyện của mình.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Fanci Club -->
+                <div class="bento-card p-8 reveal-up">
+                    <div class="bento-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-serif text-white">Fanci Club</h3>
+                            <span class="text-[10px] uppercase tracking-widest text-wa-pink font-bold px-3 py-1 border border-wa-pink/30 rounded-full">Phenomenon</span>
+                        </div>
+                        <p class="text-sm text-wa-muted leading-relaxed mb-4">Local Brand Việt trở thành hiện tượng toàn cầu nhờ sức mạnh mạng xã hội và sự lăng xê của các ngôi sao quốc tế. Minh chứng cho tiềm năng của thời trang thiết kế táo bạo, bắt trend.</p>
+                        <div class="flex items-center gap-2 text-xs text-wa-muted">
+                            <i data-lucide="globe" class="w-4 h-4 text-wa-pink"></i>
+                            <span>Được phủ sóng tại US, EU, Hàn Quốc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LSOUL -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.1s;">
+                    <div class="bento-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-serif text-white">LSOUL</h3>
+                            <span class="text-[10px] uppercase tracking-widest text-wa-pink font-bold px-3 py-1 border border-wa-pink/30 rounded-full">K-Pop Impact</span>
+                        </div>
+                        <p class="text-sm text-wa-muted leading-relaxed mb-4">Tận dụng sức ảnh hưởng văn hóa đại chúng và K-Pop. Thiết kế được <strong class="text-white">Jennie (BLACKPINK)</strong> lựa chọn, tạo ra cú hích truyền thông khổng lồ.</p>
+                        <div class="flex items-center gap-2 text-xs text-wa-muted">
+                            <i data-lucide="star" class="w-4 h-4 text-wa-pink"></i>
+                            <span>Được Jennie BLACKPINK diện đồ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gia Studios -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.2s;">
+                    <div class="bento-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-serif text-white">Gia Studios</h3>
+                            <span class="text-[10px] uppercase tracking-widest text-wa-pink font-bold px-3 py-1 border border-wa-pink/30 rounded-full">Luxury</span>
+                        </div>
+                        <p class="text-sm text-wa-muted leading-relaxed mb-4">Thương hiệu của NTK Lâm Gia Khang chinh phục phân khúc cao cấp quốc tế bằng triết lý tối giản, chất liệu thượng hạng và câu chuyện nghề may đo truyền thống.</p>
+                        <div class="flex items-center gap-2 text-xs text-wa-muted">
+                            <i data-lucide="award" class="w-4 h-4 text-wa-pink"></i>
+                            <span>Phân khúc High-end Fashion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AEIE Studios -->
+                <div class="bento-card p-8 reveal-up" style="animation-delay: 0.3s;">
+                    <div class="bento-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-serif text-white">AEIE Studios</h3>
+                            <span class="text-[10px] uppercase tracking-widest text-wa-pink font-bold px-3 py-1 border border-wa-pink/30 rounded-full">Culture</span>
+                        </div>
+                        <p class="text-sm text-wa-muted leading-relaxed mb-4">Khai thác và diễn giải lại các yếu tố văn hóa Việt Nam qua lăng kính nghệ thuật đương đại, tạo ra thiết kế độc đáo thu hút giới mộ điệu quốc tế.</p>
+                        <div class="flex items-center gap-2 text-xs text-wa-muted">
+                            <i data-lucide="palette" class="w-4 h-4 text-wa-pink"></i>
+                            <span>Văn hóa Việt qua thiết kế đương đại</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wet Avocado -->
+                <div class="bento-card p-8 reveal-up border-wa-pink/30 bg-gradient-to-br from-wa-card to-wa-pink/5" style="animation-delay: 0.4s;">
+                    <div class="bento-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-serif text-white">Wet Avocado (WA)</h3>
+                            <span class="text-[10px] uppercase tracking-widest text-wa-gold font-bold px-3 py-1 border border-wa-gold/30 rounded-full">Case Study</span>
+                        </div>
+                        <p class="text-sm text-wa-muted leading-relaxed mb-4">Thương hiệu của giảng viên Nhi. Doanh thu $1.2M+, được các ngôi sao K-Pop (2NE1, Umji) diện đồ tại <strong class="text-white">Waterbomb Festival 2025</strong>. ROAS 3.5x.</p>
+                        <div class="flex items-center gap-2 text-xs text-wa-muted">
+                            <i data-lucide="gem" class="w-4 h-4 text-wa-pink"></i>
+                            <span>2NE1, Umji, Pháo — Waterbomb 2025</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Call to Action Card -->
+                <div class="bento-card p-8 reveal-up flex items-center justify-center border-dashed" style="animation-delay: 0.5s;">
+                    <div class="bento-content text-center">
+                        <i data-lucide="arrow-right" class="w-8 h-8 text-wa-pink mx-auto mb-4"></i>
+                        <h3 class="text-lg font-serif text-white mb-2">Thương hiệu của bạn sẽ là cái tên tiếp theo?</h3>
+                        <p class="text-sm text-wa-muted">Khóa học Go Global sẽ chỉ bạn cách tạo ra câu chuyện tương tự.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. AI ứng dụng -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzI3MjcyQSIvPjwvc3ZnPg==')] opacity-50 z-0"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="glass-panel p-10 md:p-16 border-wa-pink/20 bg-gradient-to-br from-wa-card via-wa-card to-wa-pink/5 text-center reveal-up">
+                <i data-lucide="bot" class="w-16 h-16 text-wa-pink mx-auto mb-6"></i>
+                <h2 class="text-4xl font-serif mb-6">Tích Hợp <span class="text-wa-pink italic">AI Automation</span></h2>
+                <p class="text-lg text-wa-muted max-w-2xl mx-auto mb-10">Sử dụng công nghệ AI tiên tiến (Midjourney, ChatGPT-4, Claude) để tối ưu hóa nguồn lực, thay thế cả một team content và design truyền thống.</p>
+                <div class="grid md:grid-cols-3 gap-6 text-left">
+                    <div class="p-6 bg-wa-black rounded-xl border border-wa-border">
+                        <i data-lucide="image" class="w-6 h-6 text-white mb-4"></i>
+                        <h4 class="font-bold mb-2">AI Visuals</h4>
+                        <p class="text-sm text-wa-muted">Tạo Lookbook, hình ảnh sản phẩm chất lượng cao chuẩn E-commerce quốc tế mà không cần thuê Model/Studio đắt đỏ.</p>
+                    </div>
+                    <div class="p-6 bg-wa-black rounded-xl border border-wa-border">
+                        <i data-lucide="pen-tool" class="w-6 h-6 text-white mb-4"></i>
+                        <h4 class="font-bold mb-2">AI Copywriting</h4>
+                        <p class="text-sm text-wa-muted">Viết Product Description chuẩn SEO, sáng tạo Ad Copy chạm đúng Insight văn hóa khách hàng Mỹ.</p>
+                    </div>
+                    <div class="p-6 bg-wa-black rounded-xl border border-wa-border">
+                        <i data-lucide="line-chart" class="w-6 h-6 text-white mb-4"></i>
+                        <h4 class="font-bold mb-2">AI Research</h4>
+                        <p class="text-sm text-wa-muted">Phân tích đối thủ, tìm ra Winning Product và Spy Ads của đối thủ một cách chính xác.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. Lộ Trình Đào Tạo -->
+    <section id="curriculum" class="py-24 border-t border-wa-border bg-[#0A0A0B]">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 reveal-up gap-4">
+                <div>
+                    <div class="text-[10px] tracking-[0.2em] text-wa-pink uppercase mb-2 font-bold">LEARNING PATH</div>
+                    <h2 class="text-4xl md:text-5xl font-serif italic text-white leading-tight">Lộ Trình Đào Tạo<br>Thực Chiến A-Z</h2>
+                </div>
+                <div class="text-[10px] tracking-[0.15em] text-white uppercase border-b border-white pb-1 w-fit mb-2">
+                    7 MODULES • 40+ LESSONS • 1:1 SUPPORT
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Module 1 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up active border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">01</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">TỔNG QUAN & TIỀM NĂNG</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">SỨC MUA • SO SÁNH MỸ/VN • LỢI THẾ VIỆT NAM</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">1.1 TỔNG QUAN KHÓA HỌC & GIẢNG VIÊN NHI WA</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">12:40</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">1.3 TẠI SAO NÊN BÁN SANG MỸ? (CƠ HỘI & THÁCH THỨC)</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">18:15</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">1.2 SO SÁNH THỊ TRƯỜNG MỸ VS VIỆT NAM</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">15:20</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">1.4 LỢI THẾ CẠNH TRANH: FANCI, LSOUL, WA...</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">22:05</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">02</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">PHÁP NHÂN & CỔNG THANH TOÁN</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">HONG KONG LLC • STRIPE/PAYPAL • LOGISTICS</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">2.1 THIẾT LẬP CÔNG TY (HONG KONG/US/UK)</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">25:10</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">2.2 ĐĂNG KÝ STRIPE & PAYPAL BUSINESS KHÔNG BỊ HOLD</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">32:45</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">03</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">THỰC CHIẾN XÂY GIAN HÀNG</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">RESEARCH • SHOPIFY • OPTIMIZING</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">3.1 CÀI ĐẶT SHOPIFY TỪ A-Z</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">45:00</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">3.2 CÁC APP TĂNG CHUYỂN ĐỔI (CRO)</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">21:30</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 4 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">04</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">CHIẾN LƯỢC ĐỊNH GIÁ & MARKETING</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">PRICING • INSTAGRAM ADS • GOOGLE SHOPPING</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">4.1 CHIẾN LƯỢC ĐỊNH GIÁ THỊ TRƯỜNG MỸ</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">22:30</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">4.2 MARKETING ĐA KÊNH: INSTAGRAM & GOOGLE</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">28:15</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">4.3 KÉO TRAFFIC BẰNG MICRO-INFLUENCER</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">19:50</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">4.4 SET UP LOGISTICS TỪ XƯỞNG ĐI US NHANH NHẤT</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">24:10</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 5 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">05</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">CASE STUDY: HÀNH TRÌNH WA</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">HÌNH THÀNH • KHÓ KHĂN • ĐỘT PHÁ • SCALE GLOBAL</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">5.1 NHỮNG NGÀY ĐẦU: TỪ LOCAL BRAND ĐẾN GLOBAL</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">18:20</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">5.2 BÀI HỌC THẤT BẠI: HẢI QUAN, ADS, SIZE</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">22:45</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">5.3 ĐỘT PHÁ: K-POP & WATERBOMB FESTIVAL</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">15:30</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">5.4 BÍ QUYẾT SCALE: TỰ ĐỘNG HÓA & HIGH-END</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">20:15</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 6 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">06</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">BONUS: ỨNG DỤNG AI CHO THỜI TRANG</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">AI VISUALS • AI COPYWRITING • AI RESEARCH</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">6.1 TẠO ẢNH SẢN PHẨM CHUẨN E-COMMERCE BẰNG AI</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">16:40</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">6.2 GEN CONCEPT CHẠY ADS: KHÔNG CẦN STUDIO</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">21:10</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">6.3 AI COPYWRITING: SEO & AD COPY CHUẨN MỸ</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">14:25</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">6.4 THƯ VIỆN PROMPT THỜI TRANG TẶNG KÈM</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">10:50</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 7 -->
+                <div class="accordion-item bg-[#111113] rounded-[24px] cursor-pointer reveal-up border border-wa-border/50 hover:border-wa-border transition-all duration-300" onclick="toggleAccordion(this)">
+                    <div class="p-6 md:p-8 flex items-center justify-between z-10 relative">
+                        <div class="flex gap-6 md:gap-10 items-center">
+                            <span class="text-white text-2xl font-serif italic">07</span>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-bold uppercase tracking-wider text-white mb-1">KẾT THÚC & DỊCH VỤ HỖ TRỢ</h4>
+                                <p class="text-[10px] tracking-[0.1em] uppercase text-wa-muted font-semibold">TỔNG KẾT • TÀI LIỆU • GÓI DỊCH VỤ AGENCY</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-6 h-6 text-white icon-chevron transition-transform duration-300"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="px-6 pb-6 md:px-8 md:pb-8">
+                            <div class="pt-6 border-t border-[#1F1F22]">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">7.1 TỔNG KẾT LỘ TRÌNH A-Z</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">08:30</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-[#1A1A1D] rounded-xl p-4 transition-colors hover:bg-[#222226]">
+                                        <span class="text-xs md:text-sm font-semibold uppercase text-white tracking-wide">7.2 GIỚI THIỆU DỊCH VỤ: WEB, ADS, CSKH</span>
+                                        <span class="text-[10px] text-wa-muted font-medium">12:45</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10b. Tài liệu tặng kèm (Bonus) -->
+    <section class="py-24 border-t border-wa-border bg-[#0A0A0B]">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal-up">
+                <div class="section-tag">
+                    <i data-lucide="gift" class="w-3 h-3"></i>
+                    BONUS MATERIALS
+                </div>
+                <h2 class="text-4xl md:text-5xl mb-4 font-serif">Tài Liệu <span class="text-wa-pink italic">Tặng Kèm</span></h2>
+                <p class="text-wa-muted max-w-2xl mx-auto">Toàn bộ tài nguyên vận hành thực chiến — trị giá hơn $1,000 nếu mua riêng lẻ. Miễn phí khi đăng ký khóa học.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Item 1 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="calculator" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">File Excel Tính Giá & Lợi Nhuận</h4>
+                        <p class="text-xs text-wa-muted">Tính toán tự động: phí sàn, phí ship, phí hoàn hàng, biên lợi nhuận ròng theo từng sản phẩm.</p>
+                    </div>
+                </div>
+                <!-- Item 2 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.05s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="file-check" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Refund & Return Policy (EN)</h4>
+                        <p class="text-xs text-wa-muted">Mẫu chính sách đổi trả khắt khe kiểu Mỹ, sẵn sàng upload lên Shopify.</p>
+                    </div>
+                </div>
+                <!-- Item 3 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.1s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="truck" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Shipping Policy Template (EN)</h4>
+                        <p class="text-xs text-wa-muted">Cam kết thời gian vận chuyển 7-15 ngày từ VN, chuẩn Mỹ.</p>
+                    </div>
+                </div>
+                <!-- Item 4 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.15s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="shield" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Terms of Service (EN)</h4>
+                        <p class="text-xs text-wa-muted">Điều khoản bảo mật chuẩn quốc tế để đăng ký cổng thanh toán.</p>
+                    </div>
+                </div>
+                <!-- Item 5 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.2s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">FAQ Content Bank (20 Câu hỏi)</h4>
+                        <p class="text-xs text-wa-muted">20 câu hỏi khách Mỹ hay hỏi nhất về size, vải, ship + mẫu câu trả lời tiếng Anh chuẩn.</p>
+                    </div>
+                </div>
+                <!-- Item 6 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.25s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">AI Fashion Prompt Library</h4>
+                        <p class="text-xs text-wa-muted">Thư viện Prompt thời trang: tạo ảnh sản phẩm, lookbook, concept Ads bằng AI.</p>
+                    </div>
+                </div>
+                <!-- Item 7 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.3s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="ruler" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Sizing Conversion Chart</h4>
+                        <p class="text-xs text-wa-muted">Bảng chuyển đổi size VN sang US chuẩn inch, tránh hoàn hàng do nhầm size.</p>
+                    </div>
+                </div>
+                <!-- Item 8 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.35s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="layout-template" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Shopify Template ($350 Value)</h4>
+                        <p class="text-xs text-wa-muted">Bộ giao diện Shopify chuẩn quốc tế, tối ưu chuyển đổi, cài đặt trong 1 click.</p>
+                    </div>
+                </div>
+                <!-- Item 9 -->
+                <div class="glass-panel p-6 flex gap-4 items-start reveal-up" style="animation-delay: 0.4s;">
+                    <div class="w-10 h-10 rounded-xl bg-wa-pink/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="book-open" class="w-5 h-5 text-wa-pink"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Báo Cáo Phân Tích Thị Trường</h4>
+                        <p class="text-xs text-wa-muted">Phân tích chi tiết ngành may mặc/thời trang tại Mỹ: xu hướng, đối thủ, cơ hội.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12 reveal-up">
+                <div class="inline-flex items-center gap-3 bg-wa-pink/10 border border-wa-pink/20 rounded-full px-6 py-3">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-wa-pink"></i>
+                    <span class="text-sm text-wa-pink font-semibold">Tổng giá trị tài liệu tặng kèm: hơn $1,000</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. Trải nghiệm học & 12. Quyền lợi học viên -->
+    <section class="py-24 bg-wa-card border-y border-wa-border">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16">
+                <!-- Trải nghiệm học -->
+                <div class="reveal-up">
+                    <h3 class="text-3xl font-serif italic mb-8">Trải nghiệm học tập (E-Learning)</h3>
+                    <div class="space-y-6">
+                        <div class="glass-panel p-6 flex gap-4 items-start">
+                            <i data-lucide="monitor-play" class="w-8 h-8 text-wa-pink shrink-0"></i>
+                            <div>
+                                <h4 class="font-bold mb-2">Hệ thống Video bài giảng 4K</h4>
+                                <p class="text-sm text-wa-muted">Học mọi lúc mọi nơi với nền tảng nội bộ chuyên nghiệp. Nội dung được cấu trúc rõ ràng, thực tế, không lý thuyết suông.</p>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 flex gap-4 items-start">
+                            <i data-lucide="users" class="w-8 h-8 text-wa-pink shrink-0"></i>
+                            <div>
+                                <h4 class="font-bold mb-2">Live Q&A Hàng Tuần</h4>
+                                <p class="text-sm text-wa-muted">Gặp gỡ giảng viên trực tiếp qua Zoom để tháo gỡ khó khăn trong quá trình setup và chạy thực tế.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quyền lợi học viên -->
+                <div class="reveal-up" style="animation-delay: 0.2s;">
+                    <h3 class="text-3xl font-serif italic mb-8">Đặc Quyền Riêng Biệt</h3>
+                    <ul class="space-y-4 text-wa-muted">
+                        <li class="flex items-center gap-4 bg-wa-black p-4 rounded-xl border border-wa-border">
+                            <i data-lucide="download" class="text-wa-pink w-5 h-5"></i>
+                            <span>Tặng bộ Template Shopify trị giá $350.</span>
+                        </li>
+                        <li class="flex items-center gap-4 bg-wa-black p-4 rounded-xl border border-wa-border">
+                            <i data-lucide="file-text" class="text-wa-pink w-5 h-5"></i>
+                            <span>Bộ tài liệu xin cổng thanh toán và Appeal khi bị khóa tài khoản.</span>
+                        </li>
+                        <li class="flex items-center gap-4 bg-wa-black p-4 rounded-xl border border-wa-border">
+                            <i data-lucide="network" class="text-wa-pink w-5 h-5"></i>
+                            <span>Contact các Agency 3PL, Fulfillment uy tín, giá tốt nhất.</span>
+                        </li>
+                        <li class="flex items-center gap-4 bg-wa-black p-4 rounded-xl border border-wa-border">
+                            <i data-lucide="messages-square" class="text-wa-pink w-5 h-5"></i>
+                            <span>Gia nhập Private Community - Elite Global Sellers.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 13. Kêu gọi đăng ký (CTA, Pricing, Social Proof) -->
+    <section id="register" class="py-32 relative overflow-hidden text-center">
+        <div class="absolute inset-0 bg-gradient-to-t from-wa-pink/20 to-transparent opacity-30 pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <h2 class="text-5xl md:text-6xl font-serif italic mb-6 reveal-up">Bắt đầu đế chế <br><span class="text-wa-pink">Global của bạn</span></h2>
+            <p class="text-wa-muted text-lg mb-16 reveal-up">Đừng chỉ bán trong nước với lợi nhuận mỏng manh. Đưa thương hiệu Việt vươn tầm thế giới ngay hôm nay.</p>
+
+            <!-- Social Proof Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 max-w-4xl mx-auto">
+                <div class="bento-card p-6 text-center reveal-up">
+                    <div class="text-3xl font-serif text-wa-pink mb-1" id="student-count">127</div>
+                    <div class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Học viên đã đăng ký</div>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.1s;">
+                    <div class="text-3xl font-serif text-white mb-1">4.9<span class="text-lg text-wa-muted">/5</span></div>
+                    <div class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Đánh giá trung bình</div>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.2s;">
+                    <div class="text-3xl font-serif text-white mb-1">89%</div>
+                    <div class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Ra đơn trong 30 ngày</div>
+                </div>
+                <div class="bento-card p-6 text-center reveal-up" style="animation-delay: 0.3s;">
+                    <div class="text-3xl font-serif text-white mb-1">7</div>
+                    <div class="text-[10px] uppercase tracking-widest text-wa-muted font-bold">Suất Early Bird còn lại</div>
+                </div>
+            </div>
+
+            <!-- Testimonials -->
+            <div class="grid md:grid-cols-3 gap-6 mb-16 max-w-6xl mx-auto">
+                <div class="glass-panel p-8 text-left reveal-up">
+                    <div class="flex items-center gap-1 mb-4">
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                    </div>
+                    <p class="text-sm text-wa-muted leading-relaxed mb-6 italic font-serif">"Sau khóa học, mình đã mở được Stripe Business account và có đơn đầu tiên từ Mỹ trong vòng 3 tuần. Chị Nhi hướng dẫn cực kỳ chi tiết, không giấu nghề."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-wa-pink/20 flex items-center justify-center">
+                            <span class="text-sm font-bold text-wa-pink">ML</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white">Minh Lan</div>
+                            <div class="text-xs text-wa-muted">Founder, Local Brand TP.HCM</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-8 text-left reveal-up" style="animation-delay: 0.1s;">
+                    <div class="flex items-center gap-1 mb-4">
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                    </div>
+                    <p class="text-sm text-wa-muted leading-relaxed mb-6 italic font-serif">"Mình là xưởng may, chưa bao giờ nghĩ bán được cho khách Mỹ. Nhờ module AI mà mình tự gen được cả lookbook, tiết kiệm cả ngàn đô tiền chụp ảnh."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-wa-pink/20 flex items-center justify-center">
+                            <span class="text-sm font-bold text-wa-pink">HT</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white">Hoàng Trung</div>
+                            <div class="text-xs text-wa-muted">Chủ xưởng may, Hà Nội</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-8 text-left reveal-up" style="animation-delay: 0.2s;">
+                    <div class="flex items-center gap-1 mb-4">
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                        <i data-lucide="star" class="w-4 h-4 text-wa-gold fill-wa-gold"></i>
+                    </div>
+                    <p class="text-sm text-wa-muted leading-relaxed mb-6 italic font-serif">"Trước đây bán Dropship lãi vài đồng lẻ. Sau khoá học chuyển sang Brand D2C, biên lợi nhuận ròng tăng từ 5% lên 22%. Tài liệu tặng kèm xứng đáng gấp 10 lần giá khóa học."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-wa-pink/20 flex items-center justify-center">
+                            <span class="text-sm font-bold text-wa-pink">TN</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white">Thanh Nhàn</div>
+                            <div class="text-xs text-wa-muted">E-commerce Seller, Đà Nẵng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Countdown + Pricing -->
+            <div class="bento-card p-10 md:p-14 max-w-2xl mx-auto text-center border-wa-pink/30 reveal-up" style="background: radial-gradient(circle at top, rgba(255,183,197,0.1), transparent);">
+                <!-- Countdown -->
+                <div class="flex items-center justify-center gap-2 mb-5">
+                    <i data-lucide="clock" class="w-5 h-5 text-wa-pink animate-pulse"></i>
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-wa-pink font-bold">Ưu đãi Early Bird kết thúc sau</span>
+                </div>
+                <div class="flex justify-center gap-4 md:gap-8 mb-8">
+                    <div class="text-center">
+                        <div class="text-4xl md:text-5xl font-serif text-white" id="countdown-days">06</div>
+                        <div class="text-[10px] uppercase tracking-widest text-wa-muted mt-1">Ngày</div>
+                    </div>
+                    <div class="text-4xl md:text-5xl font-serif text-wa-pink/30">:</div>
+                    <div class="text-center">
+                        <div class="text-4xl md:text-5xl font-serif text-white" id="countdown-hours">18</div>
+                        <div class="text-[10px] uppercase tracking-widest text-wa-muted mt-1">Giờ</div>
+                    </div>
+                    <div class="text-4xl md:text-5xl font-serif text-wa-pink/30">:</div>
+                    <div class="text-center">
+                        <div class="text-4xl md:text-5xl font-serif text-white" id="countdown-mins">42</div>
+                        <div class="text-[10px] uppercase tracking-widest text-wa-muted mt-1">Phút</div>
+                    </div>
+                    <div class="text-4xl md:text-5xl font-serif text-wa-pink/30">:</div>
+                    <div class="text-center">
+                        <div class="text-4xl md:text-5xl font-serif text-wa-pink" id="countdown-secs">00</div>
+                        <div class="text-[10px] uppercase tracking-widest text-wa-muted mt-1">Giây</div>
+                    </div>
+                </div>
+
+                <div class="border-t border-wa-border/30 pt-8">
+                    <div class="uppercase tracking-widest text-wa-pink text-sm font-bold mb-4">Suất Học Sớm (Early Bird)</div>
+                    <div class="flex items-end justify-center gap-2 mb-6">
+                        <span class="text-wa-muted line-through text-2xl">$499</span>
+                        <span class="text-6xl font-serif text-white">$249</span>
+                    </div>
+                    <p class="text-sm text-wa-muted mb-8">Cam kết hỗ trợ cho đến khi ra đơn hàng đầu tiên. Tặng kèm toàn bộ tài nguyên vận hành.</p>
+                    <button class="btn-primary w-full text-lg py-5">Đăng Ký Tham Gia Ngay</button>
+                    <div class="mt-4 text-xs text-wa-muted flex items-center justify-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-green-400"></i> Thanh toán an toàn 100%
+                    </div>
+                    <p class="text-xs text-wa-muted/60 mt-3">Sau thời gian đếm ngược, giá tăng lên $499. Không gia hạn.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-wa-border bg-black text-center text-sm text-wa-muted">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2 font-serif text-white text-lg">
+                <i data-lucide="gem" class="w-5 h-5 text-wa-pink"></i> Wet Avocado
+            </div>
+            <p>© 2026 Wet Avocado Agency. Crafted by Nô tì 🙇‍♂️</p>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-wa-pink transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                <a href="#" class="hover:text-wa-pink transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Init Icons
+        lucide.createIcons();
+
+        // Hover Effect cho Bento Cards
+        document.querySelectorAll('.bento-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // Toggle Accordion
+        function toggleAccordion(element) {
+            const isActive = element.classList.contains('active');
+            // Close all
+            document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('active'));
+            // Open clicked
+            if (!isActive) element.classList.add('active');
+        }
+
+        // GSAP Scroll Animations
+        gsap.registerPlugin(ScrollTrigger);
+        
+        const revealElements = document.querySelectorAll('.reveal-up');
+        revealElements.forEach(el => {
+            gsap.to(el, {
+                scrollTrigger: {
+                    trigger: el,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+        });
+
+        // Navbar Blur on Scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-black/80', 'border-b', 'border-wa-border');
+                nav.classList.remove('glass-panel');
+            } else {
+                nav.classList.remove('bg-black/80', 'border-b', 'border-wa-border');
+                nav.classList.add('glass-panel');
+            }
+        });
+
+        // Countdown Timer (6 days from now)
+        (function() {
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 6);
+            endDate.setHours(endDate.getHours() + 18);
+            endDate.setMinutes(endDate.getMinutes() + 42);
+
+            function updateCountdown() {
+                const now = new Date();
+                const diff = endDate - now;
+                if (diff <= 0) return;
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('countdown-days').textContent = String(days).padStart(2, '0');
+                document.getElementById('countdown-hours').textContent = String(hours).padStart(2, '0');
+                document.getElementById('countdown-mins').textContent = String(mins).padStart(2, '0');
+                document.getElementById('countdown-secs').textContent = String(secs).padStart(2, '0');
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })();
+    </script>
+</body>
+</html>

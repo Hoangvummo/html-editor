@@ -249,20 +249,26 @@ button {
   flex: 0 0 auto;
 }
 
-.toolbar-logo {
+.toolbar-logo,
+.toolbar-brand {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin-right: 12px;
   white-space: nowrap;
   letter-spacing: -0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.toolbar-logo span {
+.toolbar-logo span,
+.toolbar-brand span {
   color: var(--accent);
 }
 
-.toolbar-separator {
+.toolbar-separator,
+.toolbar-divider {
   width: 1px;
   height: 24px;
   background: var(--border-color);
@@ -274,12 +280,20 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
+  min-width: 32px;
   height: 32px;
+  padding: 0 8px;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   position: relative;
+  gap: 6px;
+}
+
+/* Buttons with text (Import/Export) get more padding */
+.toolbar-btn span {
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .toolbar-btn:hover {
@@ -382,7 +396,8 @@ button {
 }
 
 /* Responsive mode buttons */
-.responsive-btns {
+.responsive-btns,
+.responsive-group {
   display: flex;
   gap: 2px;
   background: var(--bg-primary);

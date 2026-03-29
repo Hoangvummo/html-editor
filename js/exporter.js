@@ -68,10 +68,16 @@ export function importHTML() {
 // ── Load HTML into iframe (renders EXACTLY like browser) ──
 export function loadImportedHTML(htmlString) {
   const canvas = document.getElementById('canvas');
-  if (!canvas) return;
+  if (!canvas) {
+    console.error('❌ [loadImportedHTML] Canvas element not found');
+    return;
+  }
+
+  console.log('📦 [loadImportedHTML] Loading HTML, length:', htmlString.length);
 
   // ── 1. Clear canvas ─────────────────────────────────────
   canvas.innerHTML = '';
+  console.log('📦 [loadImportedHTML] Canvas cleared');
 
   // ── 2. Create iframe ────────────────────────────────────
   const iframe = document.createElement('iframe');
@@ -88,18 +94,22 @@ export function loadImportedHTML(htmlString) {
 
   // ── 3. Add iframe to canvas ─────────────────────────────
   canvas.appendChild(iframe);
+  console.log('📦 [loadImportedHTML] Iframe appended to canvas');
 
   // ── 4. Auto-resize iframe to fit content ────────────────
   iframe.addEventListener('load', () => {
+    console.log('📦 [loadImportedHTML] Iframe load event fired');
     try {
       resizeIframe(iframe);
+      console.log('📦 [loadImportedHTML] Iframe resized to:', iframe.style.height);
     } catch (e) {
-      console.warn('resizeIframe failed:', e);
+      console.warn('⚠️ resizeIframe failed:', e);
     }
     try {
       setupIframeClicks();
+      console.log('📦 [loadImportedHTML] Iframe click handling setup');
     } catch (e) {
-      console.warn('setupIframeClicks failed:', e);
+      console.warn('⚠️ setupIframeClicks failed:', e);
     }
     // Watch for content changes
     try {
@@ -111,9 +121,25 @@ export function loadImportedHTML(htmlString) {
         observer.observe(doc.body, {
           childList: true, subtree: true, attributes: true
         });
+        console.log('📦 [loadImportedHTML] MutationObserver attached');
+
+        // Also resize after CDN scripts finish loading (Tailwind, GSAP, etc.)
+        // These scripts modify DOM after initial load
+        setTimeout(() => {
+          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (CDN scripts)'); } catch(e) {}
+        }, 1000);
+        setTimeout(() => {
+          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (2s)'); } catch(e) {}
+        }, 2000);
+        setTimeout(() => {
+          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (3s)'); } catch(e) {}
+        }, 3000);
+        setTimeout(() => {
+          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Final resize (5s)'); } catch(e) {}
+        }, 5000);
       }
     } catch (e) {
-      console.warn('MutationObserver setup failed:', e);
+      console.warn('⚠️ MutationObserver setup failed:', e);
     }
     window.addEventListener('resize', () => {
       try { resizeIframe(iframe); } catch(e) {}
@@ -123,6 +149,7 @@ export function loadImportedHTML(htmlString) {
   // ── 5. Write HTML into iframe ───────────────────────────
   // Using srcdoc preserves full HTML including external scripts/styles
   iframe.srcdoc = htmlString;
+  console.log('📦 [loadImportedHTML] srcdoc set, length:', htmlString.length);
 
   emit('history:push');
 }
@@ -137,6 +164,7 @@ function resizeIframe(iframe) {
       body.scrollHeight, body.offsetHeight,
       html.scrollHeight, html.offsetHeight
     );
+    // Minimum 400px, but allow full page height
     iframe.style.height = Math.max(height, 400) + 'px';
   } catch (e) {
     iframe.style.height = '100vh';

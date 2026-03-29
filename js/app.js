@@ -12,34 +12,92 @@ import { on } from './state.js';
 import { renderSidebar } from './components.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🔧 [Step 1] DOM loaded, starting initialization...');
+
   // Render sidebar components first
   renderSidebar();
+  console.log('🔧 [Step 2] Sidebar rendered');
 
   // Setup search filter
   const searchInput = document.getElementById('component-search');
   if (searchInput) {
     searchInput.addEventListener('input', () => renderSidebar(searchInput.value));
+    console.log('🔧 [Step 2.1] Search filter attached');
+  } else {
+    console.warn('⚠️ [Step 2.1] Search input not found');
   }
 
   // Initialize all core modules
-  initCanvas();
-  initSidebarDrag();
-  initCanvasSortable();
-  initDropZone();
-  initPanel();
-  initEditor();
-  initHistory();
-  initToolbar();
+  try { initCanvas(); console.log('🔧 [Step 3] Canvas initialized'); }
+  catch(e) { console.error('❌ [Step 3] Canvas init failed:', e); }
 
-  console.log('🎨 Visual Editor initialized');
+  try { initSidebarDrag(); console.log('🔧 [Step 4] Sidebar drag initialized'); }
+  catch(e) { console.error('❌ [Step 4] Sidebar drag failed:', e); }
 
-  // ── Auto-import test page ─────────────────────────────────
+  try { initCanvasSortable(); console.log('🔧 [Step 5] Canvas sortable initialized'); }
+  catch(e) { console.error('❌ [Step 5] Canvas sortable failed:', e); }
+
+  try { initDropZone(); console.log('🔧 [Step 6] Drop zone initialized'); }
+  catch(e) { console.error('❌ [Step 6] Drop zone failed:', e); }
+
+  try { initPanel(); console.log('🔧 [Step 7] Panel initialized'); }
+  catch(e) { console.error('❌ [Step 7] Panel init failed:', e); }
+
+  try { initEditor(); console.log('🔧 [Step 8] Editor initialized'); }
+  catch(e) { console.error('❌ [Step 8] Editor init failed:', e); }
+
+  try { initHistory(); console.log('🔧 [Step 9] History initialized'); }
+  catch(e) { console.error('❌ [Step 9] History init failed:', e); }
+
+  try { initToolbar(); console.log('🔧 [Step 10] Toolbar initialized'); }
+  catch(e) { console.error('❌ [Step 10] Toolbar init failed:', e); }
+
+  console.log('🎨 Visual Editor initialized — all modules loaded');
+
+  // ── Auto-import Go Global page ──────────────────────────
+  // Step 4: Import goglobal.html directly
   setTimeout(() => {
-    fetch('./test.html')
-      .then(r => r.text())
-      .then(html => { loadImportedHTML(html); console.log('✅ Test page loaded'); })
-      .catch(e => console.warn('Import failed:', e));
-  }, 500);
+    console.log('🔧 [Step 11] Starting auto-import of goglobal.html...');
+    fetch('./goglobal.html')
+      .then(r => {
+        console.log('🔧 [Step 12] Fetch response status:', r.status, r.statusText);
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        return r.text();
+      })
+      .then(html => {
+        console.log('🔧 [Step 13] HTML loaded, length:', html.length, 'chars');
+        console.log('🔧 [Step 13.1] First 200 chars:', html.substring(0, 200));
+        console.log('🔧 [Step 13.2] Has DOCTYPE:', html.includes('<!DOCTYPE'));
+        console.log('🔧 [Step 13.3] Has body:', html.includes('<body'));
+        console.log('🔧 [Step 13.4] External scripts:', (html.match(/<script\s+src=/g) || []).length);
+
+        loadImportedHTML(html);
+        console.log('✅ [Step 14] Go Global page loaded into iframe');
+
+        // Verify iframe was created
+        const canvas = document.getElementById('canvas');
+        const iframe = canvas ? canvas.querySelector('iframe.imported-iframe') : null;
+        if (iframe) {
+          console.log('✅ [Step 15] Iframe created successfully');
+          console.log('🔧 [Step 15.1] Iframe srcdoc length:', (iframe.srcdoc || '').length);
+          console.log('🔧 [Step 15.2] Iframe dimensions:', iframe.offsetWidth, 'x', iframe.offsetHeight);
+        } else {
+          console.error('❌ [Step 15] Iframe NOT found in canvas!');
+        }
+      })
+      .catch(e => {
+        console.error('❌ [Step 12/13] Import failed:', e);
+        // Fallback: try simple-test.html
+        console.log('🔧 [Fallback] Trying simple-test.html...');
+        fetch('./simple-test.html')
+          .then(r => r.text())
+          .then(html => {
+            loadImportedHTML(html);
+            console.log('✅ [Fallback] Simple test loaded');
+          })
+          .catch(e2 => console.error('❌ [Fallback] Simple test also failed:', e2));
+      });
+  }, 300);
 });
 
 function initToolbar() {
