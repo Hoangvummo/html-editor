@@ -33,17 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('🎨 Visual Editor initialized');
 
-  // ── Auto-import test (debug) ─────────────────────────────
-  fetch('./test.html').then(r => {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text();
-  }).then(html => {
-    if (html.includes('Test Page Works')) {
-      console.log('📥 Auto-importing test.html...');
-      loadImportedHTML(html);
-      console.log('✅ Auto-import test OK');
-    }
-  }).catch(e => console.log('⚠️ Auto-import test skipped:', e.message));
+  // ── Auto-import test page ─────────────────────────────────
+  setTimeout(() => {
+    fetch('./test.html')
+      .then(r => r.text())
+      .then(html => { loadImportedHTML(html); console.log('✅ Test page loaded'); })
+      .catch(e => console.warn('Import failed:', e));
+  }, 500);
 });
 
 function initToolbar() {
