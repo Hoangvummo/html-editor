@@ -1,274 +1,165 @@
-// exporter.js — Export/Import HTML using iframe for perfect rendering
+// exporter.js — Export/Import HTML
 // Import: render full page in iframe (100% browser-like)
-// Export: extract clean HTML from canvas
+// Export: extract clean HTML
 
 import { emit } from './state.js';
-import { setupIframeClicks } from './canvas.js';
 
 // ── Export HTML as downloadable file ───────────────────────
 export function exportHTML() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
-  let htmlContent;
-
-  // If iframe exists (imported page), export from iframe
-  const iframe = canvas.querySelector('iframe.imported-iframe');
+  let html;
+  const iframe = canvas.querySelector('iframe');
   if (iframe && iframe.contentDocument) {
-    htmlContent = iframe.contentDocument.documentElement.outerHTML;
+    html = '<!DOCTYPE html>\n' + iframe.contentDocument.documentElement.outerHTML;
   } else {
-    // Export from canvas directly
-    const cleaned = cleanCanvas(canvas);
-    htmlContent = wrapHTML5(cleaned);
+    html = wrapHTML5(cleanCanvas(canvas));
   }
 
-  // Create blob and trigger download
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'page.html';
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, 100);
-
-  showToast('✅ HTML exported successfully!');
-  return htmlContent;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'page.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported!');
+  return html;
 }
 
 // ── Import HTML from file ──────────────────────────────────
 export function importHTML() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.html,.htm,text/html';
-  input.style.display = 'none';
-
-  input.addEventListener('change', (e) => {
+  input.accept = '.html,.htm';
+  input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
-      loadImportedHTML(event.target.result);
-      showToast('✅ HTML imported successfully!');
-    };
-    reader.onerror = () => showToast('❌ Failed to read file', 'error');
+    reader.onload = (ev) => loadImportedHTML(ev.target.result);
     reader.readAsText(file);
-  });
-
-  document.body.appendChild(input);
+  };
   input.click();
-  setTimeout(() => { if (input.parentNode) input.remove(); }, 5000);
 }
 
-// ── Load HTML into iframe (renders EXACTLY like browser) ──
+// ── Load HTML into iframe ──────────────────────────────────
 export function loadImportedHTML(htmlString) {
   const canvas = document.getElementById('canvas');
-  if (!canvas) {
-    console.error('❌ [loadImportedHTML] Canvas element not found');
-    return;
-  }
+  if (!canvas) return;
 
-  console.log('📦 [loadImportedHTML] Loading HTML, length:', htmlString.length);
-
-  // ── 1. Clear canvas ─────────────────────────────────────
+  // Clear canvas
   canvas.innerHTML = '';
-  console.log('📦 [loadImportedHTML] Canvas cleared');
 
-  // ── 2. Create iframe ────────────────────────────────────
+  // Create iframe
   const iframe = document.createElement('iframe');
-  iframe.className = 'imported-iframe';
-  iframe.style.cssText = `
-    width: 100%;
-    min-height: 400px;
-    height: 400px;
-    border: none;
-    display: block;
-    background: white;
-    border-radius: inherit;
-    overflow: auto;
-  `;
+  iframe.style.cssText = 'width:100%;height:800px;border:none;display:block;background:#fff;overflow:auto;';
   iframe.setAttribute('scrolling', 'yes');
 
-  // ── 3. Add iframe to canvas ─────────────────────────────
-  canvas.appendChild(iframe);
-  console.log('📦 [loadImportedHTML] Iframe appended to canvas');
+  // Set srcdoc BEFORE appending
+  iframe.srcdoc = htmlString;
 
-  // ── 4. Auto-resize iframe to fit content ────────────────
-  iframe.addEventListener('load', () => {
-    console.log('📦 [loadImportedHTML] Iframe load event fired');
-    try {
-      resizeIframe(iframe);
-      console.log('📦 [loadImportedHTML] Iframe resized to:', iframe.style.height);
-    } catch (e) {
-      console.warn('⚠️ resizeIframe failed:', e);
-    }
-    try {
-      setupIframeClicks();
-      console.log('📦 [loadImportedHTML] Iframe click handling setup');
-    } catch (e) {
-      console.warn('⚠️ setupIframeClicks failed:', e);
-    }
-    // Watch for content changes
+  // Append to canvas
+  canvas.appendChild(iframe);
+
+  // On load: resize iframe to fit content
+  iframe.onload = function() {
     try {
       const doc = iframe.contentDocument;
       if (doc && doc.body) {
-        const observer = new MutationObserver(() => {
-          try { resizeIframe(iframe); } catch(e) {}
-        });
-        observer.observe(doc.body, {
-          childList: true, subtree: true, attributes: true
-        });
-        console.log('📦 [loadImportedHTML] MutationObserver attached');
-
-        // Also resize after CDN scripts finish loading (Tailwind, GSAP, etc.)
-        // These scripts modify DOM after initial load
-        setTimeout(() => {
-          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (CDN scripts)'); } catch(e) {}
-        }, 1000);
-        setTimeout(() => {
-          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (2s)'); } catch(e) {}
-        }, 2000);
-        setTimeout(() => {
-          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Delayed resize (3s)'); } catch(e) {}
-        }, 3000);
-        setTimeout(() => {
-          try { resizeIframe(iframe); console.log('📦 [loadImportedHTML] Final resize (5s)'); } catch(e) {}
-        }, 5000);
+        const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, 800);
+        iframe.style.height = h + 'px';
       }
-    } catch (e) {
-      console.warn('⚠️ MutationObserver setup failed:', e);
+    } catch(e) {
+      iframe.style.height = '5000px';
     }
-    window.addEventListener('resize', () => {
-      try { resizeIframe(iframe); } catch(e) {}
-    });
-  });
 
-  // ── 5. Write HTML into iframe ───────────────────────────
-  // Using srcdoc preserves full HTML including external scripts/styles
-  iframe.srcdoc = htmlString;
-  console.log('📦 [loadImportedHTML] srcdoc set, length:', htmlString.length);
+    // Delayed resizes for CDN scripts (Tailwind, GSAP)
+    [2000, 5000].forEach(ms => {
+      setTimeout(() => {
+        try {
+          const d = iframe.contentDocument;
+          if (d && d.body) {
+            iframe.style.height = Math.max(d.body.scrollHeight, d.documentElement.scrollHeight, 800) + 'px';
+          }
+        } catch(e) {}
+      }, ms);
+    });
+
+    // Setup click handling inside iframe
+    try {
+      const doc = iframe.contentDocument;
+      doc.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const el = e.target;
+        doc.querySelectorAll('.editor-selected').forEach(x => x.classList.remove('editor-selected'));
+        if (el && el !== doc.body && el !== doc.documentElement) {
+          el.classList.add('editor-selected');
+        }
+      }, true);
+      doc.addEventListener('mouseover', (e) => {
+        if (e.target && e.target !== doc.body) e.target.classList.add('editor-hover');
+      });
+      doc.addEventListener('mouseout', (e) => {
+        if (e.target) e.target.classList.remove('editor-hover');
+      });
+    } catch(e) {}
+  };
 
   emit('history:push');
-}
-
-function resizeIframe(iframe) {
-  try {
-    const doc = iframe.contentDocument;
-    if (!doc) return;
-    const body = doc.body;
-    const html = doc.documentElement;
-    const height = Math.max(
-      body.scrollHeight, body.offsetHeight,
-      html.scrollHeight, html.offsetHeight
-    );
-    // Minimum 400px, but allow full page height
-    iframe.style.height = Math.max(height, 400) + 'px';
-  } catch (e) {
-    iframe.style.height = '100vh';
-  }
-}
-
-// ── Get iframe contentDocument for editing ────────────────
-export function getImportedDoc() {
-  const canvas = document.getElementById('canvas');
-  if (!canvas) return null;
-  const iframe = canvas.querySelector('iframe.imported-iframe');
-  if (iframe && iframe.contentDocument) return iframe.contentDocument;
-  return null;
-}
-
-// ── Check if page is imported (using iframe) ──────────────
-export function isImportedPage() {
-  const canvas = document.getElementById('canvas');
-  return canvas ? !!canvas.querySelector('iframe.imported-iframe') : false;
 }
 
 // ── Copy to clipboard ─────────────────────────────────────
 export async function copyToClipboard() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
-
-  let htmlContent;
-  const iframe = canvas.querySelector('iframe.imported-iframe');
-  if (iframe && iframe.contentDocument) {
-    htmlContent = iframe.contentDocument.documentElement.outerHTML;
-  } else {
-    htmlContent = wrapHTML5(cleanCanvas(canvas));
-  }
-
-  try {
-    await navigator.clipboard.writeText(htmlContent);
-    showToast('📋 HTML copied to clipboard!');
-  } catch (err) {
-    const ta = document.createElement('textarea');
-    ta.value = htmlContent;
-    ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); showToast('📋 Copied!'); }
-    catch (e) { showToast('❌ Failed to copy', 'error'); }
-    document.body.removeChild(ta);
-  }
+  const iframe = canvas.querySelector('iframe');
+  const html = iframe && iframe.contentDocument
+    ? '<!DOCTYPE html>\n' + iframe.contentDocument.documentElement.outerHTML
+    : wrapHTML5(cleanCanvas(canvas));
+  await navigator.clipboard.writeText(html);
+  showToast('Copied!');
 }
 
-// ── Clean canvas for export (non-iframe content) ──────────
-function cleanCanvas(sourceCanvas) {
-  const clone = sourceCanvas.cloneNode(true);
-  clone.querySelectorAll('.canvas-empty-state, .drop-indicator, .drag-handle, iframe').forEach(el => el.remove());
-  clone.querySelectorAll('.imported-content').forEach(w => {
-    while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w);
-    w.remove();
-  });
+// ── Helper: clean canvas for export ────────────────────────
+function cleanCanvas(canvas) {
+  const clone = canvas.cloneNode(true);
+  clone.querySelectorAll('iframe, .canvas-empty-state, .drop-indicator, .drag-handle').forEach(el => el.remove());
   clone.querySelectorAll('*').forEach(el => {
-    ['editor-selected','editor-hover','editor-editing','sortable-ghost',
-     'sortable-chosen','sortable-drag','dragging','editing']
-      .forEach(cls => el.classList.remove(cls));
+    ['editor-selected','editor-hover','editor-editing','sortable-ghost','sortable-chosen'].forEach(c => el.classList.remove(c));
     el.removeAttribute('data-component');
     el.removeAttribute('data-component-id');
     el.removeAttribute('data-imported');
     el.removeAttribute('contenteditable');
-    el.removeAttribute('draggable');
-    if (el.className === '') el.removeAttribute('class');
+    if (!el.className) el.removeAttribute('class');
   });
   return clone.innerHTML;
 }
 
-// ── Wrap in HTML5 document ────────────────────────────────
-function wrapHTML5(bodyContent) {
+// ── Helper: wrap in HTML5 document ─────────────────────────
+function wrapHTML5(body) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page</title>
 </head>
 <body>
-${bodyContent}
+${body}
 </body>
 </html>`;
 }
 
 // ── Toast notification ─────────────────────────────────────
-function showToast(message, type = 'success') {
-  const existing = document.querySelector('.toast-notification');
-  if (existing) existing.remove();
-
-  const toast = document.createElement('div');
-  toast.className = `toast-notification toast-${type}`;
-  toast.textContent = message;
-  toast.style.cssText = `
-    position:fixed; bottom:24px; right:24px;
-    background:${type === 'error' ? '#f85149' : '#3fb950'};
-    color:#fff; padding:12px 20px; border-radius:8px;
-    font:14px Inter,system-ui,sans-serif;
-    z-index:10000; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-    animation:toastIn 0.3s ease-out;
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.animation = 'toastOut 0.3s ease-in forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
+function showToast(msg) {
+  let t = document.querySelector('.toast-notification');
+  if (t) t.remove();
+  t = document.createElement('div');
+  t.className = 'toast-notification';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#3fb950;color:#fff;padding:10px 18px;border-radius:8px;font:14px Inter,sans-serif;z-index:9999;';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
