@@ -1,13 +1,10 @@
 /* ================================================================
-   canvas.css — Canvas-specific styles
-   Drop zones, selection outlines, drag indicators
+   canvas.css — Canvas + Iframe styles
    ================================================================ */
 
-/* ── Canvas Area ─────────────────────────────────────────────── */
-/* Canvas is transparent — imported page's own background shows through.
-   Only show white background when canvas is empty (via .canvas-empty-bg). */
+/* ── Canvas Area ─────────────────────────────────────────── */
 #canvas {
-  background: transparent;
+  background: #ffffff;
   border-radius: var(--radius-lg);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.1),
@@ -16,69 +13,66 @@
   width: 100%;
   max-width: 100%;
   min-height: 400px;
-  overflow: visible;
+  overflow: hidden;
   transition:
-    max-width var(--transition-normal) ease,
-    min-height var(--transition-normal) ease;
+    max-width 0.25s ease,
+    min-height 0.25s ease;
 }
 
-/* White background only when canvas has no imported content */
-#canvas:has(.canvas-empty-state) {
-  background: #ffffff;
-}
-
-/* Canvas content area — only force position:relative on editor-added components,
-   NOT on imported page elements (which may have their own positioning) */
+/* Canvas children (non-iframe, non-empty-state) */
 #canvas > [data-component]:not(.drop-indicator):not(.canvas-empty-state) {
   position: relative;
 }
 
-/* Imported content wrapper — preserve original layout */
-#canvas > .imported-content {
+/* ── Iframe (imported page) ──────────────────────────────── */
+#canvas iframe.imported-iframe {
   width: 100%;
+  height: 100%;
+  min-height: 400px;
+  border: none;
+  display: block;
+  background: #ffffff;
+  border-radius: inherit;
 }
 
-/* ── Editor-Selected State (inside canvas) ───────────────────── */
+/* ── Editor-Selected State ───────────────────────────────── */
 #canvas .editor-selected {
-  outline: 2px solid var(--accent) !important;
+  outline: 2px solid var(--accent, #58a6ff) !important;
   outline-offset: 0;
   z-index: 5;
 }
 
-/* Label badge above selected element */
 #canvas .editor-selected::before {
   content: attr(data-component);
   position: absolute;
   top: -22px;
   left: 0;
-  background: var(--accent);
+  background: var(--accent, #58a6ff);
   color: #fff;
-  font-family: var(--font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: 4px 4px 0 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   z-index: 10;
   white-space: nowrap;
   pointer-events: none;
-  line-height: 1.3;
 }
 
-/* ── Editor-Hover State (inside canvas) ──────────────────────── */
+/* ── Editor-Hover State ──────────────────────────────────── */
 #canvas .editor-hover {
   outline: 1px dashed rgba(88, 166, 255, 0.5) !important;
   outline-offset: 0;
   cursor: pointer;
 }
 
-/* Hover only when NOT selected */
 #canvas .editor-selected.editor-hover {
-  outline: 2px solid var(--accent) !important;
+  outline: 2px solid var(--accent, #58a6ff) !important;
 }
 
-/* ── Drag Handle ─────────────────────────────────────────────── */
+/* ── Drag Handle ─────────────────────────────────────────── */
 #canvas .drag-handle {
   position: absolute;
   left: -22px;
@@ -91,18 +85,16 @@
   justify-content: center;
   cursor: grab;
   color: #9ca3af;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   opacity: 0;
-  transition: all var(--transition-fast);
+  transition: opacity 0.15s ease;
   font-size: 11px;
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
   z-index: 6;
   user-select: none;
-  line-height: 1;
 }
 
-/* Six dots pattern using CSS */
 #canvas .drag-handle::before {
   content: '⠿';
   font-size: 12px;
@@ -112,61 +104,44 @@
   opacity: 1;
 }
 
-#canvas .drag-handle:hover {
-  color: #6b7280;
-  background: #e5e7eb;
-  border-color: #d1d5db;
-}
+#canvas .drag-handle:hover { background: #e5e7eb; }
+#canvas .drag-handle:active { cursor: grabbing; }
 
-#canvas .drag-handle:active {
-  cursor: grabbing;
-  background: #d1d5db;
-}
-
-/* ── Drop Indicator (inside canvas) ──────────────────────────── */
+/* ── Drop Indicator ──────────────────────────────────────── */
 #canvas .drop-indicator {
   height: 3px;
-  background: var(--accent);
+  background: var(--accent, #58a6ff);
   border-radius: 2px;
-  margin: 0;
   position: relative;
   z-index: 10;
   box-shadow: 0 0 8px rgba(88, 166, 255, 0.4);
-  animation: canvasDropPulse 0.6s ease-in-out infinite alternate;
+  animation: dropPulse 0.6s ease-in-out infinite alternate;
 }
 
-@keyframes canvasDropPulse {
+@keyframes dropPulse {
   0% { box-shadow: 0 0 4px rgba(88, 166, 255, 0.3); }
   100% { box-shadow: 0 0 14px rgba(88, 166, 255, 0.6); }
 }
 
-/* ── Drag Over Visual Feedback ───────────────────────────────── */
+/* ── Drag Over ───────────────────────────────────────────── */
 #canvas.drag-over {
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 4px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 2px var(--accent, #58a6ff), 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
-/* ── Inline Editing State ────────────────────────────────────── */
+/* ── Inline Editing ──────────────────────────────────────── */
 #canvas .editor-editing {
-  outline: 1px dashed var(--accent) !important;
+  outline: 1px dashed var(--accent, #58a6ff) !important;
   outline-offset: 2px;
   cursor: text;
-  caret-color: var(--accent);
+  caret-color: var(--accent, #58a6ff);
   min-height: 1em;
 }
 
 #canvas .editor-editing:focus {
-  outline: 2px solid var(--accent) !important;
-  outline-offset: 2px;
+  outline: 2px solid var(--accent, #58a6ff) !important;
 }
 
-/* Prevent layout shift during inline edit */
-#canvas .editor-editing * {
-  cursor: text;
-}
-
-/* ── Canvas Empty State ──────────────────────────────────────── */
+/* ── Empty State ─────────────────────────────────────────── */
 .canvas-empty-state {
   display: flex;
   flex-direction: column;
@@ -180,55 +155,24 @@
   user-select: none;
 }
 
-.canvas-empty-state svg {
-  opacity: 0.4;
-  color: #9ca3af;
-}
+.canvas-empty-state svg { opacity: 0.4; }
+.canvas-empty-state p { font-size: 14px; font-weight: 500; color: #6b7280; }
 
-.canvas-empty-state p {
-  font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-/* ── Responsive Preview Containers ───────────────────────────── */
-
-/* Desktop — full width */
-#canvas[data-responsive="desktop"] {
-  width: 100%;
-  max-width: 100%;
-  min-height: calc(100vh - var(--toolbar-height) - 48px);
-}
-
-/* Tablet — 768px centered */
-#canvas[data-responsive="tablet"] {
-  width: 768px;
-  max-width: 768px;
-  min-height: 600px;
-  margin: 0 auto;
-}
-
-/* Mobile — 375px centered */
+/* ── Responsive Preview ──────────────────────────────────── */
+#canvas[data-responsive="desktop"] { width: 100%; max-width: 100%; }
+#canvas[data-responsive="tablet"] { width: 768px; max-width: 768px; margin: 0 auto; }
 #canvas[data-responsive="mobile"] {
-  width: 375px;
-  max-width: 375px;
-  min-height: 667px;
-  margin: 0 auto;
-  border-radius: var(--radius-xl);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.1),
-    0 0 0 8px var(--bg-tertiary),
-    0 0 0 9px var(--border-color),
-    0 4px 24px rgba(0, 0, 0, 0.2);
+  width: 375px; max-width: 375px; margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 0 0 8px #21262d, 0 0 0 9px #30363d, 0 4px 24px rgba(0,0,0,0.2);
 }
 
-/* ── Preview Mode (inside canvas) ────────────────────────────── */
+/* ── Preview Mode ────────────────────────────────────────── */
 body.preview-mode #canvas {
   border-radius: 0;
   box-shadow: none;
   width: 100% !important;
   max-width: 100% !important;
-  min-height: 100vh !important;
 }
 
 body.preview-mode #canvas .editor-selected,
@@ -239,71 +183,14 @@ body.preview-mode #canvas .canvas-empty-state {
   display: none !important;
 }
 
-body.preview-mode #canvas [data-component] {
-  outline: none !important;
-  cursor: default;
-}
+/* ── SortableJS States ───────────────────────────────────── */
+.sortable-ghost { opacity: 0.3 !important; outline: 2px dashed var(--accent, #58a6ff) !important; }
+.sortable-chosen { outline: 2px solid var(--accent, #58a6ff) !important; }
+.sortable-drag { opacity: 0.8 !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important; }
 
-/* ── Component Placeholder Images ────────────────────────────── */
-#canvas img[src*="placeholder"],
-#canvas img:not([src]),
-#canvas img[src=""] {
-  background: #e5e7eb;
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
+/* ── Responsive Mode Classes ─────────────────────────────── */
+.responsive-tablet { max-width: 768px !important; margin: 0 auto !important; }
+.responsive-mobile { max-width: 375px !important; margin: 0 auto !important; }
 
-#canvas img[src*="placeholder"]::after,
-#canvas img:not([src])::after,
-#canvas img[src=""]::after {
-  content: 'Image';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  color: #9ca3af;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* ── SortableJS States ──────────────────────────────────── */
-.sortable-ghost {
-  opacity: 0.3 !important;
-  outline: 2px dashed var(--accent) !important;
-  outline-offset: -2px;
-}
-
-.sortable-chosen {
-  outline: 2px solid var(--accent) !important;
-  outline-offset: 2px;
-}
-
-.sortable-drag {
-  opacity: 0.8 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* ── Responsive Preview Modes ───────────────────────────── */
-.responsive-tablet {
-  max-width: 768px !important;
-  margin: 0 auto !important;
-  box-shadow: 0 0 0 1px var(--border-color) !important;
-}
-
-.responsive-mobile {
-  max-width: 375px !important;
-  margin: 0 auto !important;
-  box-shadow: 0 0 0 1px var(--border-color) !important;
-}
-
-/* ── Component Items Container ──────────────────────────── */
-.component-items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+/* ── Component Items Container ───────────────────────────── */
+.component-items { display: flex; flex-direction: column; gap: 2px; }

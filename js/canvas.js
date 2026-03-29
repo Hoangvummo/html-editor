@@ -39,27 +39,63 @@ function refreshSelection() {
 
 // ── Click handler ──────────────────────────────────────────
 function handleClick(e) {
-  // If clicking inside an inline-editable element during editing, stop propagation
   if (e.target.isContentEditable) {
     e.stopPropagation();
     return;
   }
 
-  // Check if click is inside imported content — select the wrapper, not inner elements
-  const importedWrapper = e.target.closest('[data-imported]');
-  if (importedWrapper && canvas.contains(importedWrapper)) {
-    e.stopPropagation();
-    selectElement(importedWrapper);
-    return;
-  }
-
+  // Check if clicking on canvas background → deselect
   const componentEl = e.target.closest('[data-component]');
   if (componentEl && canvas.contains(componentEl)) {
     e.stopPropagation();
     selectElement(componentEl);
   } else {
-    // Clicked on canvas background → deselect
     deselect();
+  }
+}
+
+// ── Setup click handling inside imported iframe ────────────
+export function setupIframeClicks() {
+  const iframe = canvas.querySelector('iframe.imported-iframe');
+  if (!iframe || !iframe.contentDocument) return;
+
+  try {
+    const iframeDoc = iframe.contentDocument;
+
+    iframeDoc.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Find clicked element
+      const target = e.target;
+      if (!target || target === iframeDoc.body || target === iframeDoc.documentElement) {
+        // Clicked on iframe background → select iframe wrapper
+        selectElement(iframe);
+        return;
+      }
+
+      // Select the clicked element
+      // Remove previous selections
+      iframeDoc.querySelectorAll('.editor-selected').forEach(el =>
+        el.classList.remove('editor-selected')
+      );
+
+      target.classList.add('editor-selected');
+      selectElement(target);
+    }, true);
+
+    // Hover effect
+    iframeDoc.addEventListener('mouseover', (e) => {
+      if (e.target && e.target !== iframeDoc.body && e.target !== iframeDoc.documentElement) {
+        e.target.classList.add('editor-hover');
+      }
+    });
+    iframeDoc.addEventListener('mouseout', (e) => {
+      if (e.target) e.target.classList.remove('editor-hover');
+    });
+
+  } catch (e) {
+    console.warn('Could not setup iframe clicks:', e);
   }
 }
 

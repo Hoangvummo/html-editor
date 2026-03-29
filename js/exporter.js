@@ -1,48 +1,50 @@
-// exporter.js — Export/Import HTML
-// Clean export with editor markup removed, file import, clipboard copy
+// exporter.js — Export/Import HTML using iframe for perfect rendering
+// Import: render full page in iframe (100% browser-like)
+// Export: extract clean HTML from canvas
 
 import { emit } from './state.js';
-
-const EDITOR_CLASSES = [
-  'editor-selected', 'editor-hover', 'editor-editing',
-  'sortable-ghost', 'sortable-chosen', 'sortable-drag',
-  'dragging', 'editing'
-];
+import { setupIframeClicks } from './canvas.js';
 
 // ── Export HTML as downloadable file ───────────────────────
 export function exportHTML() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
-  const cleaned = cleanCanvas(canvas);
-  const html = wrapHTML5(cleaned);
+  let htmlContent;
+
+  // If iframe exists (imported page), export from iframe
+  const iframe = canvas.querySelector('iframe.imported-iframe');
+  if (iframe && iframe.contentDocument) {
+    htmlContent = iframe.contentDocument.documentElement.outerHTML;
+  } else {
+    // Export from canvas directly
+    const cleaned = cleanCanvas(canvas);
+    htmlContent = wrapHTML5(cleaned);
+  }
 
   // Create blob and trigger download
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement('a');
   link.href = url;
   link.download = 'page.html';
   link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
-
-  // Cleanup
   setTimeout(() => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, 100);
 
   showToast('✅ HTML exported successfully!');
-  return html;
+  return htmlContent;
 }
 
 // ── Import HTML from file ──────────────────────────────────
 export function importHTML() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.html,text/html';
+  input.accept = '.html,.htm,text/html';
   input.style.display = 'none';
 
   input.addEventListener('change', (e) => {
@@ -51,287 +53,151 @@ export function importHTML() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target.result;
-      loadImportedHTML(content);
+      loadImportedHTML(event.target.result);
       showToast('✅ HTML imported successfully!');
     };
-    reader.onerror = () => {
-      showToast('❌ Failed to read file', 'error');
-    };
-
+    reader.onerror = () => showToast('❌ Failed to read file', 'error');
     reader.readAsText(file);
   });
 
   document.body.appendChild(input);
   input.click();
-
-  // Cleanup input after selection
-  setTimeout(() => {
-    if (document.body.contains(input)) {
-      document.body.removeChild(input);
-    }
-  }, 5000);
+  setTimeout(() => { if (input.parentNode) input.remove(); }, 5000);
 }
 
+// ── Load HTML into iframe (renders EXACTLY like browser) ──
 function loadImportedHTML(htmlString) {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
-  // ── 0. Clean up previous imports ────────────────────────────
-  canvas.querySelectorAll('.imported-content').forEach(el => el.remove());
-  canvas.querySelectorAll('.canvas-empty-state').forEach(el => el.remove());
-  document.querySelectorAll('[id^="imported-styles"]').forEach(el => el.remove());
-  document.querySelectorAll('script[data-imported-tailwind]').forEach(el => el.remove());
-  document.querySelectorAll('script[data-imported-config]').forEach(el => el.remove());
+  // ── 1. Clear canvas ─────────────────────────────────────
+  canvas.innerHTML = '';
 
-  // Parse the HTML
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
+  // ── 2. Create iframe ────────────────────────────────────
+  const iframe = document.createElement('iframe');
+  iframe.className = 'imported-iframe';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: white;
+    border-radius: inherit;
+  `;
 
-  // ── 1. Extract and inject Google Fonts into document <head> ──
-  const existingFontHrefs = new Set(
-    Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'))
-      .map(l => l.href)
-  );
-  doc.querySelectorAll('link[href*="fonts.googleapis.com"]').forEach(link => {
-    if (!existingFontHrefs.has(link.href)) {
-      const newLink = document.createElement('link');
-      newLink.rel = 'stylesheet';
-      newLink.href = link.href;
-      document.head.appendChild(newLink);
+  // ── 3. Add iframe to canvas ─────────────────────────────
+  canvas.appendChild(iframe);
+
+  // ── 4. Auto-resize iframe to fit content ────────────────
+  iframe.addEventListener('load', () => {
+    resizeIframe(iframe);
+    setupIframeClicks();
+    // Watch for content changes
+    const observer = new MutationObserver(() => resizeIframe(iframe));
+    if (iframe.contentDocument?.body) {
+      observer.observe(iframe.contentDocument.body, {
+        childList: true, subtree: true, attributes: true
+      });
     }
+    window.addEventListener('resize', () => resizeIframe(iframe));
   });
 
-  // ── 2. Extract body content → ADD TO CANVAS FIRST ──────────
-  // Tailwind CDN needs to see content in DOM when it processes
-  const bodyClone = doc.body.cloneNode(true);
-  bodyClone.querySelectorAll('script').forEach(s => s.remove());
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'imported-content';
-  wrapper.setAttribute('data-imported', 'true');
-  wrapper.setAttribute('data-component', 'imported-page');
-  wrapper.style.width = '100%';
-  // Copy body attributes (class, style, etc.) to wrapper
-  if (bodyClone.className) wrapper.className += ' ' + bodyClone.className;
-  if (bodyClone.getAttribute('style')) wrapper.style.cssText += ';' + bodyClone.getAttribute('style');
-  wrapper.innerHTML = bodyClone.innerHTML;
-  canvas.appendChild(wrapper);
-
-  // ── 3. Inject Tailwind config (must be BEFORE Tailwind CDN) ──
-  doc.querySelectorAll('script:not([src])').forEach(script => {
-    if (script.textContent.includes('tailwind.config')) {
-      const s = document.createElement('script');
-      s.setAttribute('data-imported-config', 'true');
-      s.textContent = script.textContent;
-      document.head.appendChild(s);
-    }
-  });
-
-  // ── 4. Inject Tailwind CDN → it will scan DOM including canvas content ──
-  const hasTailwindCDN = doc.querySelector('script[src*="tailwindcss"]');
-  if (hasTailwindCDN && !document.querySelector('script[src*="tailwindcss"]:not([data-imported-tailwind])')) {
-    const s = document.createElement('script');
-    s.src = hasTailwindCDN.src;
-    s.crossOrigin = 'anonymous';
-    s.setAttribute('data-imported-tailwind', 'true');
-    document.head.appendChild(s);
-  }
-
-  // ── 5. Extract and inject scoped custom CSS ────────────────
-  let combinedCSS = '';
-  doc.querySelectorAll('head style').forEach((styleTag, i) => {
-    const css = styleTag.textContent;
-    if (css.trim()) {
-      combinedCSS += `\n/* Imported style block ${i + 1} */\n${css}\n`;
-    }
-  });
-
-  if (combinedCSS) {
-    const scopedCSS = scopeCSS(combinedCSS, '.imported-content');
-    const styleEl = document.createElement('style');
-    styleEl.id = 'imported-styles-' + Date.now();
-    styleEl.textContent = scopedCSS;
-    document.head.appendChild(styleEl);
-  }
+  // ── 5. Write HTML into iframe ───────────────────────────
+  // Using srcdoc preserves full HTML including external scripts/styles
+  iframe.srcdoc = htmlString;
 
   emit('history:push');
 }
 
-/**
- * Scope CSS rules under a parent selector to avoid conflicts with editor CSS.
- * Handles:
- * - Simple selectors: .class → .imported-content .class
- * - Body selectors: body → .imported-content
- * - HTML selectors: html → .imported-content
- * - @-rules (media, keyframes, etc.) — passed through with inner rules scoped
- * - @font-face — passed through unchanged
- */
-function scopeCSS(css, scope) {
-  if (!css || !css.trim()) return '';
-
-  // Step 1: Extract and preserve @-rule blocks (keyframes, font-face, etc.)
-  // These should NOT be scoped — they're global by nature
-  const atRulePlaceholder = '/*__AT_RULE__*/';
-  const preservedAtRules = [];
-  let result = css;
-
-  // Match @-rule blocks with balanced braces (handles nested braces)
-  result = result.replace(/@[\w-]+[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g, (match) => {
-    // Don't scope @media, @supports, @layer — handle their inner content
-    const atRuleType = match.match(/^@([\w-]+)/)?.[1];
-    if (['media', 'supports', 'layer'].includes(atRuleType)) {
-      // Extract inner content and scope it
-      const innerMatch = match.match(/^(@[^{]+)\{([\s\S]*)\}$/);
-      if (innerMatch) {
-        const [, atRuleHeader, innerContent] = innerMatch;
-        const scopedInner = scopeSelectors(innerContent, scope);
-        return `${atRuleHeader} { ${scopedInner} }`;
-      }
-    }
-    // Preserve @keyframes, @font-face, etc. unchanged
-    preservedAtRules.push(match);
-    return `${atRulePlaceholder}${preservedAtRules.length - 1}${atRulePlaceholder}`;
-  });
-
-  // Step 2: Scope remaining selectors
-  result = scopeSelectors(result, scope);
-
-  // Step 3: Restore preserved @-rules
-  result = result.replace(/\/\*__AT_RULE__\*\/(\d+)\/\*__AT_RULE__\*\//g, (_, index) => {
-    return preservedAtRules[parseInt(index)] || '';
-  });
-
-  return result;
+function resizeIframe(iframe) {
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    const body = doc.body;
+    const html = doc.documentElement;
+    const height = Math.max(
+      body.scrollHeight, body.offsetHeight,
+      html.scrollHeight, html.offsetHeight
+    );
+    iframe.style.height = Math.max(height, 400) + 'px';
+  } catch (e) {
+    iframe.style.height = '100vh';
+  }
 }
 
-function scopeSelectors(css, scope) {
-  return css.replace(/([^{]*)\{([^}]*)\}/g, (match, selector, declarations) => {
-    const sel = selector.trim();
-    if (sel.startsWith('@')) return match; // Skip any remaining @-rules
-    if (!sel) return match;
-
-    const scoped = sel.split(',').map(s => {
-      s = s.trim();
-      if (s.startsWith(scope)) return s; // Already scoped
-      if (s === 'body' || s === 'html') return scope;
-      if (s === '*') return `${scope} *`;
-      if (s.startsWith('*::')) return `${scope} ${s}`;
-      if (s.startsWith('*:')) return `${scope} ${s}`;
-      return `${scope} ${s}`;
-    }).join(', ');
-
-    return `${scoped} { ${declarations} }`;
-  });
+// ── Get iframe contentDocument for editing ────────────────
+export function getImportedDoc() {
+  const canvas = document.getElementById('canvas');
+  if (!canvas) return null;
+  const iframe = canvas.querySelector('iframe.imported-iframe');
+  if (iframe && iframe.contentDocument) return iframe.contentDocument;
+  return null;
 }
 
-// ── Copy to clipboard ──────────────────────────────────────
+// ── Check if page is imported (using iframe) ──────────────
+export function isImportedPage() {
+  const canvas = document.getElementById('canvas');
+  return canvas ? !!canvas.querySelector('iframe.imported-iframe') : false;
+}
+
+// ── Copy to clipboard ─────────────────────────────────────
 export async function copyToClipboard() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
-  const cleaned = cleanCanvas(canvas);
-  const html = wrapHTML5(cleaned);
+  let htmlContent;
+  const iframe = canvas.querySelector('iframe.imported-iframe');
+  if (iframe && iframe.contentDocument) {
+    htmlContent = iframe.contentDocument.documentElement.outerHTML;
+  } else {
+    htmlContent = wrapHTML5(cleanCanvas(canvas));
+  }
 
   try {
-    await navigator.clipboard.writeText(html);
+    await navigator.clipboard.writeText(htmlContent);
     showToast('📋 HTML copied to clipboard!');
   } catch (err) {
-    // Fallback for older browsers
-    const textarea = document.createElement('textarea');
-    textarea.value = html;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-
-    try {
-      document.execCommand('copy');
-      showToast('📋 HTML copied to clipboard!');
-    } catch (e) {
-      showToast('❌ Failed to copy', 'error');
-    }
-
-    document.body.removeChild(textarea);
+    const ta = document.createElement('textarea');
+    ta.value = htmlContent;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('📋 Copied!'); }
+    catch (e) { showToast('❌ Failed to copy', 'error'); }
+    document.body.removeChild(ta);
   }
 }
 
-// ── Clean canvas for export ────────────────────────────────
+// ── Clean canvas for export (non-iframe content) ──────────
 function cleanCanvas(sourceCanvas) {
   const clone = sourceCanvas.cloneNode(true);
-
-  // Remove empty state placeholder
-  clone.querySelectorAll('.canvas-empty-state').forEach(el => el.remove());
-
-  // Remove drop indicator
-  clone.querySelectorAll('.drop-indicator').forEach(el => el.remove());
-
-  // Remove drag handles
-  clone.querySelectorAll('.drag-handle').forEach(el => el.remove());
-
-  // Unwrap imported-content wrapper — move its children up
-  clone.querySelectorAll('.imported-content').forEach(wrapper => {
-    const parent = wrapper.parentNode;
-    while (wrapper.firstChild) {
-      parent.insertBefore(wrapper.firstChild, wrapper);
-    }
-    wrapper.remove();
+  clone.querySelectorAll('.canvas-empty-state, .drop-indicator, .drag-handle, iframe').forEach(el => el.remove());
+  clone.querySelectorAll('.imported-content').forEach(w => {
+    while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w);
+    w.remove();
   });
-
-  // Clean all elements
   clone.querySelectorAll('*').forEach(el => {
-    // Remove editor classes
-    EDITOR_CLASSES.forEach(cls => el.classList.remove(cls));
-
-    // Remove editor-specific attributes
+    ['editor-selected','editor-hover','editor-editing','sortable-ghost',
+     'sortable-chosen','sortable-drag','dragging','editing']
+      .forEach(cls => el.classList.remove(cls));
     el.removeAttribute('data-component');
     el.removeAttribute('data-component-id');
     el.removeAttribute('data-imported');
     el.removeAttribute('contenteditable');
     el.removeAttribute('draggable');
-    el.removeAttribute('spellcheck');
-
-    // Remove empty class attributes
-    if (el.className === '') {
-      el.removeAttribute('class');
-    }
+    if (el.className === '') el.removeAttribute('class');
   });
-
   return clone.innerHTML;
 }
 
-// ── Wrap in valid HTML5 document ───────────────────────────
+// ── Wrap in HTML5 document ────────────────────────────────
 function wrapHTML5(bodyContent) {
-  // Collect font families used in inline styles
-  const fonts = collectUsedFonts(bodyContent);
-
-  const fontLinks = fonts.length > 0
-    ? fonts.map(f =>
-        `<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(f)}:wght@300;400;500;600;700&display=swap" rel="stylesheet">`
-      ).join('\n    ')
-    : '';
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Page</title>
-  ${fontLinks}
-  <style>
-    /* Reset */
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      line-height: 1.6;
-      color: #e6edf3;
-      background: #0d1117;
-    }
-    img { max-width: 100%; height: auto; }
-    a { color: #58a6ff; }
-  </style>
 </head>
 <body>
 ${bodyContent}
@@ -339,31 +205,8 @@ ${bodyContent}
 </html>`;
 }
 
-// ── Collect fonts used in content ──────────────────────────
-function collectUsedFonts(html) {
-  const fontSet = new Set();
-  const fontFamilies = [
-    'Inter', 'Arial', 'Helvetica', 'Georgia', 'Times New Roman',
-    'Playfair Display', 'Roboto', 'Open Sans', 'Lato', 'Montserrat',
-    'Poppins'
-  ];
-
-  // Simple regex check for font-family in inline styles
-  const styleRegex = /font-family:\s*['"]?([^;'"]+)/gi;
-  let match;
-  while ((match = styleRegex.exec(html)) !== null) {
-    const font = match[1].trim().replace(/['"]/g, '');
-    if (fontFamilies.includes(font)) {
-      fontSet.add(font);
-    }
-  }
-
-  return Array.from(fontSet);
-}
-
 // ── Toast notification ─────────────────────────────────────
 function showToast(message, type = 'success') {
-  // Remove existing toast
   const existing = document.querySelector('.toast-notification');
   if (existing) existing.remove();
 
@@ -371,24 +214,13 @@ function showToast(message, type = 'success') {
   toast.className = `toast-notification toast-${type}`;
   toast.textContent = message;
   toast.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: ${type === 'error' ? '#f85149' : '#3fb950'};
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: Inter, system-ui, sans-serif;
-    z-index: 10000;
-    animation: toastIn 0.3s ease-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position:fixed; bottom:24px; right:24px;
+    background:${type === 'error' ? '#f85149' : '#3fb950'};
+    color:#fff; padding:12px 20px; border-radius:8px;
+    font:14px Inter,system-ui,sans-serif;
+    z-index:10000; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    animation:toastIn 0.3s ease-out;
   `;
-
   document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.animation = 'toastOut 0.3s ease-in forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  setTimeout(() => { toast.style.animation = 'toastOut 0.3s ease-in forwards'; setTimeout(() => toast.remove(), 300); }, 3000);
 }
