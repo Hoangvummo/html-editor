@@ -90,7 +90,9 @@ export function loadImportedHTML(htmlString) {
     display: block;
     background: white;
     border-radius: inherit;
+    overflow: auto;
   `;
+  iframe.setAttribute('scrolling', 'yes');
 
   // ── 3. Add iframe to canvas ─────────────────────────────
   canvas.appendChild(iframe);
