@@ -66,7 +66,7 @@ export function importHTML() {
 }
 
 // ── Load HTML into iframe (renders EXACTLY like browser) ──
-function loadImportedHTML(htmlString) {
+export function loadImportedHTML(htmlString) {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
@@ -78,7 +78,8 @@ function loadImportedHTML(htmlString) {
   iframe.className = 'imported-iframe';
   iframe.style.cssText = `
     width: 100%;
-    height: 100%;
+    min-height: 400px;
+    height: 400px;
     border: none;
     display: block;
     background: white;
@@ -90,16 +91,33 @@ function loadImportedHTML(htmlString) {
 
   // ── 4. Auto-resize iframe to fit content ────────────────
   iframe.addEventListener('load', () => {
-    resizeIframe(iframe);
-    setupIframeClicks();
-    // Watch for content changes
-    const observer = new MutationObserver(() => resizeIframe(iframe));
-    if (iframe.contentDocument?.body) {
-      observer.observe(iframe.contentDocument.body, {
-        childList: true, subtree: true, attributes: true
-      });
+    try {
+      resizeIframe(iframe);
+    } catch (e) {
+      console.warn('resizeIframe failed:', e);
     }
-    window.addEventListener('resize', () => resizeIframe(iframe));
+    try {
+      setupIframeClicks();
+    } catch (e) {
+      console.warn('setupIframeClicks failed:', e);
+    }
+    // Watch for content changes
+    try {
+      const doc = iframe.contentDocument;
+      if (doc && doc.body) {
+        const observer = new MutationObserver(() => {
+          try { resizeIframe(iframe); } catch(e) {}
+        });
+        observer.observe(doc.body, {
+          childList: true, subtree: true, attributes: true
+        });
+      }
+    } catch (e) {
+      console.warn('MutationObserver setup failed:', e);
+    }
+    window.addEventListener('resize', () => {
+      try { resizeIframe(iframe); } catch(e) {}
+    });
   });
 
   // ── 5. Write HTML into iframe ───────────────────────────

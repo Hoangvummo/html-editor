@@ -7,7 +7,7 @@ import { init as initPanel } from './panel.js';
 import { init as initEditor } from './editor.js';
 import { init as initHistory, undo, redo, canUndo, canRedo } from './history.js';
 import { togglePreview, setResponsive } from './preview.js';
-import { exportHTML, importHTML, copyToClipboard } from './exporter.js';
+import { exportHTML, importHTML, copyToClipboard, loadImportedHTML } from './exporter.js';
 import { on } from './state.js';
 import { renderSidebar } from './components.js';
 
@@ -32,6 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initToolbar();
 
   console.log('🎨 Visual Editor initialized');
+
+  // ── Auto-import test (debug) ─────────────────────────────
+  fetch('./test.html').then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(html => {
+    if (html.includes('Test Page Works')) {
+      console.log('📥 Auto-importing test.html...');
+      loadImportedHTML(html);
+      console.log('✅ Auto-import test OK');
+    }
+  }).catch(e => console.log('⚠️ Auto-import test skipped:', e.message));
 });
 
 function initToolbar() {
